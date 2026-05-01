@@ -1,12 +1,15 @@
+import org.gradle.kotlin.dsl.compileOnly
+
 plugins {
     `kotlin-dsl`
 }
 
 dependencies {
-    compileOnly(libs.android.gradlePlugin)
-    compileOnly(libs.kotlin.gradlePlugin)
-    compileOnly(libs.compose.gradlePlugin)
-    compileOnly(libs.ktlint.gradlePlugin)
+    compileOnly(libs.gradlePlugin.android)
+    compileOnly(libs.gradlePlugin.kotlin)
+    compileOnly(libs.gradlePlugin.hilt)
+    compileOnly(libs.gradlePlugin.ksp)
+    compileOnly(libs.gradlePlugin.compose)
 }
 
 gradlePlugin {
