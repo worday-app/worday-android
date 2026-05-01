@@ -26,3 +26,4 @@ dependencyResolutionManagement {
 rootProject.name = "Worday"
 include(":app")
 include(":core:domain")
+include(":core:data")

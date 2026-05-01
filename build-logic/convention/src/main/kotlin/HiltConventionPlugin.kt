@@ -5,10 +5,21 @@ import org.gradle.kotlin.dsl.dependencies
 class HiltConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {
-            with(pluginManager) {
-                apply("com.google.dagger.hilt.android")
-                apply("com.google.devtools.ksp")
+
+            pluginManager.apply("com.google.devtools.ksp")
+
+            val applyHilt = {
+                pluginManager.apply("com.google.dagger.hilt.android")
             }
+
+            pluginManager.withPlugin("com.android.library") {
+                applyHilt()
+            }
+
+            pluginManager.withPlugin("com.android.application") {
+                applyHilt()
+            }
+
             dependencies {
                 add("implementation", libs.findLibrary("hilt-android").get())
                 add("ksp", libs.findLibrary("hilt-compiler").get())
