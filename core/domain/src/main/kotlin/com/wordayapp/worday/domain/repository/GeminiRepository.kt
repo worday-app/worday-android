@@ -5,6 +5,10 @@ import com.wordayapp.worday.domain.model.WordayError
 sealed class GeminiResult {
     data class Success(val sentences: List<String>) : GeminiResult()
     data class Error(val error: WordayError) : GeminiResult()
+
+    object NoInternet : GeminiResult()
+
+    object QuotaExceeded : GeminiResult()
 }
 
 interface GeminiRepository {
