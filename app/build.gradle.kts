@@ -18,17 +18,6 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
-        val props = Properties().apply {
-            val localFile = rootProject.file("local.properties")
-            if (localFile.exists()) load(localFile.inputStream())
-        }
-
-        buildConfigField(
-            "String",
-            "GEMINI_API_KEY",
-            "\"${props.getProperty("GEMINI_API_KEY", "")}\""
-        )
     }
 
     buildTypes {
@@ -48,7 +37,7 @@ android {
 
     buildFeatures {
         compose = true
-        buildConfig = true // 🔥 KRİTİK
+        buildConfig = true
     }
 }
 

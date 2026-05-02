@@ -1,24 +1,24 @@
-## Ne yaptım?
+## What did I do?
 
-<!-- Kısaca değişikliği anlat -->
+<!-- Briefly describe the change -->
 
-## Neden?
+## Why?
 
-<!-- Neden bu değişiklik gerekli? Hangi sorunu çözüyor? -->
+<!-- Why was this change necessary? What problem does it solve? -->
 
-## Test ettim mi?
+## Did I test it?
 
-- [ ] Unit test yazdım / mevcutları güncelledim
-- [ ] Manuel olarak test ettim
-- [ ] Yeni bir test gerekmiyordu (neden: ___)
+- [ ] Wrote unit tests / updated existing ones
+- [ ] Manually tested
+- [ ] No new tests needed (reason: ___)
 
-## Ekran görüntüsü (UI değişikliği varsa)
+## Screenshots (if UI change)
 
-<!-- Varsa buraya bırak -->
+<!-- Drop them here if applicable -->
 
 ## Checklist
 
-- [ ] Kodumda açıklanamayan kısımlara yorum ekledim
-- [ ] `ktlint` hatası yok (CI geçti)
-- [ ] `LexAIError` / `UiState` standartlarına uydum
-- [ ] Yeni string'leri `strings.xml`'e ekledim
+- [ ] Added comments to non-obvious parts of the code
+- [ ] No `ktlint` errors (CI passed)
+- [ ] Followed `WordayError` / `UiState` standards
+- [ ] Added new strings to `strings.xml`
