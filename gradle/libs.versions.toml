@@ -41,6 +41,8 @@ espressoCore = "3.7.0"
 mockk = "1.14.2"
 turbine = "1.2.0"
 coroutinesTest = "1.10.2"
+appcompat = "1.6.1"
+material = "1.10.0"
 
 [libraries]
 # AndroidX
@@ -108,6 +110,8 @@ gradlePlugin-compose = { group = "org.jetbrains.kotlin.plugin.compose", name = "
 gradlePlugin-hilt = { group = "com.google.dagger", name = "hilt-android-gradle-plugin", version.ref = "hilt" }
 gradlePlugin-ksp = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
 gradlePlugin-ktlint = { group = "org.jlleitschuh.gradle", name = "ktlint-gradle", version.ref = "ktlint" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
