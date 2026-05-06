@@ -48,6 +48,9 @@ dependencies {
     implementation(projects.core.data)
     implementation(projects.core.network)
     implementation(projects.core.common)
+    implementation(projects.feature.learn)
+    implementation(projects.feature.onboarding)
+    implementation(projects.feature.quiz)
 
     // Compose Navigation
     implementation(libs.androidx.navigation.compose)

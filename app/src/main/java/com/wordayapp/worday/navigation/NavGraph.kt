@@ -69,7 +69,27 @@ fun WordayNavGraph(
         }
 
         composable(Screen.Quiz.route) {
-            // QuizScreen()
+            QuizScreen(
+                onNavigateToResult = {
+                    navController.navigate(Screen.QuizResult.route)
+                },
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.QuizResult.route) {
+            QuizResultScreen(
+                onNavigateHome = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Home.route) { inclusive = true }
+                    }
+                },
+                onRetry = {
+                    navController.navigate(Screen.Quiz.route) {
+                        popUpTo(Screen.QuizResult.route) { inclusive = true }
+                    }
+                }
+            )
         }
 
         composable(Screen.Wordbook.route) {
