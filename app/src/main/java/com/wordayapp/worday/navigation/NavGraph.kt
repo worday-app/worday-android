@@ -24,15 +24,48 @@ fun WordayNavGraph(
         modifier = modifier
     ) {
         composable(Screen.Onboarding.route) {
-            // OnboardingScreen() — feature:onboarding hazır olunca eklenecek
+            WelcomeScreen(
+                onGetStarted = { navController.navigate(Screen.LevelTest.route) },
+                onSkipToGoal = { navController.navigate(Screen.Goal.route) }
+            )
+        }
+
+        composable(Screen.LevelTest.route) {
+            LevelTestScreen(
+                onFinished = { level ->
+                    navController.navigate(Screen.Goal.route) {
+                        popUpTo(Screen.Onboarding.route)
+                    }
+                },
+                onSkip = {
+                    navController.navigate(Screen.Goal.route) {
+                        popUpTo(Screen.Onboarding.route)
+                    }
+                }
+            )
+        }
+
+        composable(Screen.Goal.route) {
+            GoalSelectionScreen(
+                onDone = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
         }
 
         composable(Screen.Home.route) {
-            // HomeScreen() — feature:learn hazır olunca eklenecek
+            HomeScreen(
+                onNavigateToLearn = { navController.navigate(Screen.Learn.route) }
+            )
         }
 
         composable(Screen.Learn.route) {
-            // LearnScreen()
+            LearnScreen(
+                onNavigateToQuiz = { navController.navigate(Screen.Quiz.route) },
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
 
         composable(Screen.Quiz.route) {
