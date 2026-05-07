@@ -93,7 +93,7 @@ fun WordayNavGraph(
         }
 
         composable(Screen.Wordbook.route) {
-            // WordbookScreen()
+            WordbookScreen()
         }
 
         composable(Screen.Stats.route) {
