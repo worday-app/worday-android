@@ -5,6 +5,15 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.wordayapp.worday.feature.learn.screen.HomeScreen
+import com.wordayapp.worday.feature.learn.screen.LearnScreen
+import com.wordayapp.worday.feature.onboarding.screen.GoalSelectionScreen
+import com.wordayapp.worday.feature.onboarding.screen.LevelTestScreen
+import com.wordayapp.worday.feature.onboarding.screen.WelcomeScreen
+import com.wordayapp.worday.feature.quiz.screen.QuizResultScreen
+import com.wordayapp.worday.feature.quiz.screen.QuizScreen
+import com.wordayapp.worday.feature.stats.screen.StatsScreen
+import com.wordayapp.worday.feature.wordbook.screen.WordbookScreen
 
 @Composable
 fun WordayNavGraph(
@@ -96,8 +105,8 @@ fun WordayNavGraph(
             WordbookScreen()
         }
 
-        composable(Screen.Stats.route) {
-            // StatsScreen()
+        ccomposable(Screen.Stats.route) {
+            StatsScreen()
         }
     }
 }
