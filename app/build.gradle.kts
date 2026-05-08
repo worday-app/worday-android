@@ -52,6 +52,7 @@ dependencies {
     implementation(projects.feature.onboarding)
     implementation(projects.feature.quiz)
     implementation(projects.feature.wordbook)
+    implementation(projects.feature.stats)
 
     // Compose Navigation
     implementation(libs.androidx.navigation.compose)
