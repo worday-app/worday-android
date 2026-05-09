@@ -17,7 +17,8 @@ data class OnboardingState(
 )
 
 @HiltViewModel
-class OnboardingViewModel @Inject constructor(
+class
+OnboardingViewModel @Inject constructor(
     private val dataStore: UserPreferencesDataStore
 ) : ViewModel() {
 
@@ -38,7 +39,7 @@ class OnboardingViewModel @Inject constructor(
             val s = _state.value
             dataStore.setDailyWordGoal(s.selectedGoal)
             dataStore.setSelectedLevel(s.selectedLevel.name)
-            dataStore.setOnboardingCompleted(true)
+            dataStore.setOnboardingCompleted()
             onDone()
         }
     }

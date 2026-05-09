@@ -41,7 +41,7 @@ fun WordayNavGraph(
 
         composable(Screen.LevelTest.route) {
             LevelTestScreen(
-                onFinished = { level ->
+                onFinished = {
                     navController.navigate(Screen.Goal.route) {
                         popUpTo(Screen.Onboarding.route)
                     }
@@ -72,16 +72,14 @@ fun WordayNavGraph(
 
         composable(Screen.Learn.route) {
             LearnScreen(
-                onNavigateToQuiz = { navController.navigate(Screen.Quiz.route) },
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToQuiz = { navController.navigate(Screen.Quiz.route) }
             )
         }
 
         composable(Screen.Quiz.route) {
             QuizScreen(
-                onNavigateToResult = {
-                    navController.navigate(Screen.QuizResult.route)
-                },
+                onNavigateToResult = { navController.navigate(Screen.QuizResult.route) },
                 onNavigateBack = { navController.popBackStack() }
             )
         }
@@ -105,7 +103,7 @@ fun WordayNavGraph(
             WordbookScreen()
         }
 
-        ccomposable(Screen.Stats.route) {
+        composable(Screen.Stats.route) {
             StatsScreen()
         }
     }

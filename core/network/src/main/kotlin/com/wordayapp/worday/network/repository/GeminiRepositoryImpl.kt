@@ -1,5 +1,6 @@
 package com.wordayapp.worday.network.repository
 
+import com.wordayapp.worday.domain.model.WordayError
 import com.wordayapp.worday.domain.repository.GeminiRepository
 import com.wordayapp.worday.domain.repository.GeminiResult
 import com.wordayapp.worday.network.api.GeminiApiService
@@ -21,7 +22,7 @@ class GeminiRepositoryImpl @Inject constructor(
 
     override suspend fun getExampleSentences(
         word: String,
-        level: String
+        count: Int
     ): GeminiResult {
 
         if (!networkObserver.isConnected) {
@@ -29,10 +30,16 @@ class GeminiRepositoryImpl @Inject constructor(
         }
 
         return try {
-            val prompt = buildPrompt(word, level)
+
+            val prompt = buildPrompt(word, count)
+
             val request = GeminiRequest(
                 contents = listOf(
-                    GeminiContent(parts = listOf(GeminiPart(text = prompt)))
+                    GeminiContent(
+                        parts = listOf(
+                            GeminiPart(text = prompt)
+                        )
+                    )
                 )
             )
 
@@ -43,66 +50,101 @@ class GeminiRepositoryImpl @Inject constructor(
 
             when {
                 response.isSuccessful -> {
+
                     val body = response.body()
 
-                    // API'nin kendi hata alanı (HTTP 200 ama hata içeren response)
                     if (body?.error != null) {
                         return GeminiResult.Error(
-                            code = body.error.code,
-                            message = body.error.message
+                            WordayError.Network(
+                                code = body.error.code,
+                                message = body.error.message
+                            )
                         )
                     }
 
                     val text = body?.extractText()
+
                     if (text.isNullOrBlank()) {
-                        GeminiResult.Error(message = "Boş yanıt alındı")
+                        GeminiResult.Error(
+                            WordayError.Unknown
+                        )
                     } else {
-                        val sentences = parseSentences(text)
-                        GeminiResult.Success(sentences)
+                        GeminiResult.Success(
+                            parseSentences(text)
+                        )
                     }
                 }
 
-                response.code() == 429 -> GeminiResult.QuotaExceeded
+                response.code() == 429 -> {
+                    GeminiResult.QuotaExceeded
+                }
 
-                response.code() in 500..599 -> GeminiResult.Error(
-                    code = response.code(),
-                    message = "Sunucu hatası, lütfen tekrar dene"
-                )
+                response.code() in 500..599 -> {
+                    GeminiResult.Error(
+                        WordayError.Network(
+                            code = response.code(),
+                            message = "Server error"
+                        )
+                    )
+                }
 
-                else -> GeminiResult.Error(
-                    code = response.code(),
-                    message = response.message()
-                )
+                else -> {
+                    GeminiResult.Error(
+                        WordayError.Network(
+                            code = response.code(),
+                            message = response.message()
+                        )
+                    )
+                }
             }
 
-        } catch (e: java.net.UnknownHostException) {
+        } catch (_: java.net.UnknownHostException) {
+
             GeminiResult.NoInternet
-        } catch (e: java.net.SocketTimeoutException) {
-            GeminiResult.Error(message = "Bağlantı zaman aşımına uğradı")
+
+        } catch (_: java.net.SocketTimeoutException) {
+
+            GeminiResult.Error(
+                WordayError.Network(
+                    message = "Connection timeout"
+                )
+            )
+
         } catch (e: Exception) {
-            GeminiResult.Error(message = e.localizedMessage ?: "Beklenmedik bir hata oluştu")
+
+            GeminiResult.Error(
+                WordayError.Unknown
+            )
         }
     }
 
-    /**
-     * Cevaptaki cümleleri satır bazlı ayırır.
-     * "1. sentence" veya "- sentence" formatlarını normalize eder.
-     */
+    override suspend fun getRemainingFreeRequests(): Int {
+        // Faz 2 — DataStore
+        return 2
+    }
+
+    override suspend fun consumeRequest() {
+        // Faz 2 — DataStore decrement
+    }
+
     private fun parseSentences(raw: String): List<String> =
         raw.lines()
-            .map { line ->
-                line.trimStart()
-                    .removePrefix("1.").removePrefix("2.").removePrefix("3.")
-                    .removePrefix("-").removePrefix("•")
+            .map {
+                it.trim()
+                    .removePrefix("-")
+                    .removePrefix("•")
                     .trim()
             }
             .filter { it.isNotBlank() }
-            .take(3)   // maksimum 3 cümle
 
-    private fun buildPrompt(word: String, level: String): String = """
-        Generate 3 natural English example sentences for the word "$word".
-        The sentences should be appropriate for a $level English learner.
-        Keep each sentence concise and clear.
-        Return ONLY the sentences, one per line, without numbering or bullet points.
+    private fun buildPrompt(
+        word: String,
+        count: Int
+    ): String = """
+        Generate $count natural English example sentences
+        for the word "$word".
+
+        Return only the sentences.
+        One sentence per line.
     """.trimIndent()
 }
