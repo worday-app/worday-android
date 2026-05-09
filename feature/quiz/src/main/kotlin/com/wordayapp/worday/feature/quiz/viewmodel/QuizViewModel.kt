@@ -51,8 +51,8 @@ class QuizViewModel @Inject constructor(
 
     private fun loadWords() {
         viewModelScope.launch {
-            val levelName = dataStore.getSelectedLevel().first()
-            val goal = dataStore.getDailyWordGoal().first()
+            val levelName = dataStore.selectedLevel.first()
+            val goal = dataStore.dailyWordGoal.first()
             val level = runCatching { WordLevel.valueOf(levelName) }.getOrDefault(WordLevel.A1)
 
             getDailyWords(level, goal)
@@ -108,7 +108,7 @@ class QuizViewModel @Inject constructor(
 
         viewModelScope.launch {
             s.currentWord?.let { word ->
-                updateWordAfterQuiz(word, quality)
+                updateWordAfterQuiz(word, isCorrect)
             }
         }
 
@@ -143,9 +143,13 @@ class QuizViewModel @Inject constructor(
         viewModelScope.launch {
             val s = _state.value
             recordDailySession(
-                wordsStudied = s.totalWords,
-                correctAnswers = s.correctCount,
-                totalAnswers = s.totalWords
+                com.wordayapp.worday.domain.model.DailySession(
+                    date = System.currentTimeMillis(),
+                    wordsStudied = s.totalWords,
+                    correctAnswers = s.correctCount,
+                    totalAnswers = s.totalWords,
+                    isCompleted = true
+                )
             )
         }
         _state.update { it.copy(isFinished = true) }

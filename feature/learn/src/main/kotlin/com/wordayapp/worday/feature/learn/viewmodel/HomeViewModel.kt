@@ -38,7 +38,7 @@ class HomeViewModel @Inject constructor(
     private fun loadData() {
         viewModelScope.launch {
             // Günlük hedef
-            dataStore.getDailyWordGoal().collect { goal ->
+            dataStore.dailyWordGoal.collect { goal ->
                 _state.update { it.copy(dailyGoal = goal) }
             }
         }

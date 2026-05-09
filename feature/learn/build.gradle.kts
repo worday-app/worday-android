@@ -1,7 +1,5 @@
 plugins {
     id("worday.android.feature")
-    id("worday.android.library.compose")
-    id("worday.android.hilt")
 }
 
 android {

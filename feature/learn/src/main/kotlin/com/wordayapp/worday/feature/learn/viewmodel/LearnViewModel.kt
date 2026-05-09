@@ -51,8 +51,8 @@ class LearnViewModel @Inject constructor(
 
     private fun loadWords() {
         viewModelScope.launch {
-            val levelName = dataStore.getSelectedLevel().first()
-            val goal = dataStore.getDailyWordGoal().first()
+            val levelName = dataStore.selectedLevel.first()
+            val goal = dataStore.dailyWordGoal.first()
             val level = runCatching { WordLevel.valueOf(levelName) }.getOrDefault(WordLevel.A1)
 
             getDailyWords(level, goal)
@@ -83,7 +83,7 @@ class LearnViewModel @Inject constructor(
     fun onSaveWord() {
         val word = _state.value.currentWord ?: return
         viewModelScope.launch {
-            saveWord(word.id)
+            saveWord(word.id, true)
         }
     }
 
