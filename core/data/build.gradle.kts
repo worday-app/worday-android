@@ -5,16 +5,22 @@ plugins {
 
 android {
     namespace = "com.wordayapp.worday.core.data"
+    sourceSets {
+        getByName("main") {
+            assets.srcDirs("src/main/assets")
+        }
+    }
 }
 
 dependencies {
     implementation(project(":core:domain"))
-    // implementation(project(":core:common")) // common modülünü henüz açmadıysan bunu yorumda bırak
+    // implementation(project(":core:common"))
+    implementation(libs.gson)
 
     // Room
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
-    ksp(libs.room.compiler) // KSP'yi HiltConventionPlugin'den alıyor ama Room için de lazım
+    ksp(libs.room.compiler)
 
     // DataStore
     implementation(libs.datastore.preferences)
@@ -22,8 +28,4 @@ dependencies {
     // WorkManager
     implementation(libs.work.runtime.ktx)
     implementation(libs.hilt.work)
-    // hilt-compiler zaten hilt plugin içinde ksp ile ekleniyor, tekrar yazmaya gerek yok
-
-    // Tarih/Saat işlemleri için (SM-2 algoritmasında önemli)
-    implementation(libs.kotlinx.datetime)
 }
