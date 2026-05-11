@@ -13,11 +13,11 @@ import com.wordayapp.worday.ui.component.WordayOutlinedButton
 
 @Composable
 fun QuizResultScreen(
+    correctCount: Int,
+    totalWords: Int,
     onNavigateHome: () -> Unit,
     onRetry: () -> Unit,
-    viewModel: QuizViewModel = hiltViewModel()
 ) {
-    val state by viewModel.state.collectAsState()
 
     Column(
         modifier = Modifier
@@ -29,9 +29,9 @@ fun QuizResultScreen(
         Spacer(modifier = Modifier.weight(1f))
 
         QuizResultCard(
-            totalWords = state.totalWords,
-            correctCount = state.correctCount,
-            wrongCount = state.wrongCount
+            totalWords = totalWords,
+            correctCount = correctCount,
+            wrongCount = totalWords - correctCount
         )
 
         Spacer(modifier = Modifier.weight(1f))

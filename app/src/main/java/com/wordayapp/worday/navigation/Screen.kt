@@ -19,5 +19,8 @@ sealed class Screen(val route: String) {
         fun createRoute(wordId: Int) = "word_detail/$wordId"
     }
 
-    object QuizResult : Screen("quiz_result")
+    object QuizResult : Screen("quiz_result/{correctCount}/{totalWords}") {
+        fun createRoute(correctCount: Int, totalWords: Int) =
+            "quiz_result/$correctCount/$totalWords"
+    }
 }
