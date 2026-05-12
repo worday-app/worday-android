@@ -13,14 +13,16 @@ import com.wordayapp.worday.ui.component.LoadingIndicator
 
 @Composable
 fun QuizScreen(
-    onNavigateToResult: () -> Unit,
-    onNavigateBack: () -> Unit,
-    viewModel: QuizViewModel = hiltViewModel()
+    viewModel: QuizViewModel,
+    onNavigateToResult: (correctCount: Int, totalWords: Int) -> Unit,
+    onNavigateBack: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
 
     LaunchedEffect(state.isFinished) {
-        if (state.isFinished) onNavigateToResult()
+        if (state.isFinished) {
+            onNavigateToResult(state.correctCount, state.totalWords)
+        }
     }
 
     if (state.isLoading) {

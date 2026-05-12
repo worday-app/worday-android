@@ -15,10 +15,13 @@ import androidx.compose.material.icons.filled.School
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.navArgument
 import com.wordayapp.worday.feature.learn.screen.HomeScreen
 import com.wordayapp.worday.feature.learn.screen.LearnScreen
 import com.wordayapp.worday.feature.onboarding.screen.GoalSelectionScreen
@@ -26,6 +29,7 @@ import com.wordayapp.worday.feature.onboarding.screen.LevelTestScreen
 import com.wordayapp.worday.feature.onboarding.screen.WelcomeScreen
 import com.wordayapp.worday.feature.quiz.screen.QuizResultScreen
 import com.wordayapp.worday.feature.quiz.screen.QuizScreen
+import com.wordayapp.worday.feature.quiz.viewmodel.QuizViewModel
 import com.wordayapp.worday.feature.stats.screen.StatsScreen
 import com.wordayapp.worday.feature.wordbook.screen.WordbookScreen
 
@@ -149,15 +153,29 @@ fun WordayNavGraph(
                 )
             }
 
-            composable(Screen.Quiz.route) {
+            composable(Screen.Quiz.route) { backStackEntry ->
+                val quizViewModel: QuizViewModel = hiltViewModel(backStackEntry)
                 QuizScreen(
-                    onNavigateToResult = { navController.navigate(Screen.QuizResult.route) },
+                    viewModel = quizViewModel,
+                    onNavigateToResult = { correctCount, totalWords ->
+                        navController.navigate(Screen.QuizResult.createRoute(correctCount, totalWords))
+                    },
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
 
-            composable(Screen.QuizResult.route) {
+            composable(
+                route = Screen.QuizResult.route,
+                arguments = listOf(
+                    navArgument("correctCount") { type = NavType.IntType },
+                    navArgument("totalWords") { type = NavType.IntType }
+                )
+            ) { backStackEntry ->
+                val correctCount = backStackEntry.arguments?.getInt("correctCount") ?: 0
+                val totalWords = backStackEntry.arguments?.getInt("totalWords") ?: 1 // totalWords 0 olmasın diye min 1
                 QuizResultScreen(
+                    correctCount = correctCount,
+                    totalWords = totalWords,
                     onNavigateHome = {
                         navController.navigate(Screen.Home.route) {
                             popUpTo(Screen.Home.route) { inclusive = true }
