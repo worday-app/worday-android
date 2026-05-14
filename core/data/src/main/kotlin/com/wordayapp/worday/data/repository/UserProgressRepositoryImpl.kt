@@ -11,6 +11,7 @@ import com.wordayapp.worday.domain.repository.UserProgressRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.onStart
 import javax.inject.Inject
 
 class UserProgressRepositoryImpl @Inject constructor(
@@ -20,6 +21,11 @@ class UserProgressRepositoryImpl @Inject constructor(
 
     override fun getUserProgress(): Flow<UserProgress> =
         userProgressDao.observeProgress()
+            .onStart {
+                if (userProgressDao.getProgress() == null) {
+                    userProgressDao.insertOrReplace(UserProgress.createDefault().toEntity())
+                }
+            }
             .filterNotNull()
             .map { it.toDomain() }
 
@@ -46,7 +52,7 @@ class UserProgressRepositoryImpl @Inject constructor(
     override suspend fun incrementStreak() =
         userProgressDao.incrementStreak()
 
-    // --- Mapper'lar ---
+    // --- Mapper's ---
 
     private fun UserProgressEntity.toDomain() = UserProgress(
         userId = userId,

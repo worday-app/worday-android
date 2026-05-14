@@ -14,4 +14,8 @@ data class UserProgress(
     val accuracyRate: Float
         get() = if (totalAnswers == 0) 0f
         else totalCorrectAnswers.toFloat() / totalAnswers.toFloat()
+
+    companion object {
+        fun createDefault() = UserProgress()
+    }
 }
