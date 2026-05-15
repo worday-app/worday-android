@@ -10,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.compose.rememberNavController
 import com.wordayapp.worday.data.local.datastore.UserPreferencesDataStore
 import com.wordayapp.worday.navigation.WordayNavGraph
@@ -24,24 +25,26 @@ class MainActivity : ComponentActivity() {
     lateinit var dataStore: UserPreferencesDataStore
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        var isReady = false
+        splashScreen.setKeepOnScreenCondition { !isReady }
+
         setContent {
             WordayTheme {
-                val navController = rememberNavController()
-
-                // DataStore'dan gelecek — şimdilik false
-                //val isOnboardingCompleted by remember { mutableStateOf(false) }
-
                 val isOnboardingCompleted by dataStore.isOnboardingCompleted
-                    .collectAsState(initial = false)
+                    .collectAsState(initial = null)
 
-                WordayNavGraph(
-                    navController = navController,
-                    isOnboardingCompleted = isOnboardingCompleted,
-                    modifier = Modifier.fillMaxSize()
-                )
+                if (isOnboardingCompleted != null) {
+                    isReady = true
+                    WordayNavGraph(
+                        navController = rememberNavController(),
+                        isOnboardingCompleted = isOnboardingCompleted!!,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             }
         }
     }
