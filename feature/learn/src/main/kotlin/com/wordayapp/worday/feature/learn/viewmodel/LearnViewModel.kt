@@ -55,7 +55,10 @@ class LearnViewModel @Inject constructor(
             val goal = dataStore.dailyWordGoal.first()
             val level = runCatching { WordLevel.valueOf(levelName) }.getOrDefault(WordLevel.A1)
 
-            getDailyWords(level, goal)
+            val today = java.time.LocalDate.now()
+            val seed = (today.year * 10000 + today.monthValue * 100 + today.dayOfMonth).toLong()
+
+            getDailyWords(level, goal, seed)
                 .catch { _state.update { it.copy(wordsState = UiState.Error("Kelimeler yüklenemedi")) } }
                 .collect { words ->
                     _state.update { it.copy(wordsState = UiState.Success(words)) }

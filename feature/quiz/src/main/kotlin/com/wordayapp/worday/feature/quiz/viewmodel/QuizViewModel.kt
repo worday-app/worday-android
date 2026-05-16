@@ -55,18 +55,27 @@ class QuizViewModel @Inject constructor(
             val goal = dataStore.dailyWordGoal.first()
             val level = runCatching { WordLevel.valueOf(levelName) }.getOrDefault(WordLevel.A1)
 
-            getDailyWords(level, goal)
+            val today = java.time.LocalDate.now()
+            val seed = (today.year * 10000 + today.monthValue * 100 + today.dayOfMonth).toLong()
+
+            getDailyWords(level, goal, seed)
                 .catch { _state.update { it.copy(isLoading = false) } }
-                .collect { words ->
+                .first() // ← Instead of `collect()` — just emit the first signal, then stop listening.
+                .let { words ->
                     if (words.isNotEmpty()) {
                         val shuffled = words.shuffled()
+                        val first = shuffled.first()
+                        val wrong = shuffled.filter { it.id != first.id }.shuffled().take(3).map { it.turkish }
+                        val allChoices = (wrong + first.turkish).shuffled()
                         _state.update {
                             it.copy(
                                 words = shuffled,
-                                isLoading = false
+                                isLoading = false,
+                                choices = allChoices,
+                                correctChoiceIndex = allChoices.indexOf(first.turkish),
+                                selectedChoiceIndex = null
                             )
                         }
-                        prepareChoices(shuffled, 0)
                     }
                 }
         }
@@ -120,7 +129,7 @@ class QuizViewModel @Inject constructor(
             )
         }
 
-        // 900ms sonra sonraki soruya geç
+        // After 900ms, move on to the next question.
         viewModelScope.launch {
             delay(900)
             goNext()
@@ -134,8 +143,24 @@ class QuizViewModel @Inject constructor(
         if (nextIndex >= s.totalWords) {
             finishQuiz()
         } else {
-            _state.update { it.copy(currentIndex = nextIndex) }
-            prepareChoices(s.words, nextIndex)
+            val current = s.words.getOrNull(nextIndex) ?: return
+            val wrong = s.words
+                .filter { it.id != current.id }
+                .shuffled()
+                .take(3)
+                .map { it.turkish }
+            val allChoices = (wrong + current.turkish).shuffled()
+            val correctIndex = allChoices.indexOf(current.turkish)
+
+            // Update all at once — no flash.
+            _state.update {
+                it.copy(
+                    currentIndex = nextIndex,
+                    choices = allChoices,
+                    correctChoiceIndex = correctIndex,
+                    selectedChoiceIndex = null
+                )
+            }
         }
     }
 
