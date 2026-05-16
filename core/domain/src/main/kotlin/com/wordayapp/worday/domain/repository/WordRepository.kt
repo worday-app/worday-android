@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface WordRepository {
     fun getWordsDueForReview(): Flow<List<Word>>
-    fun getDailyWords(level: WordLevel, count: Int): Flow<List<Word>>
+    fun getDailyWords(level: WordLevel, count: Int, seed: Long): Flow<List<Word>>
     fun getSavedWords(): Flow<List<Word>>
     suspend fun getWordById(id: Int): Word?
     suspend fun updateWord(word: Word)

@@ -9,6 +9,6 @@ import javax.inject.Inject
 class GetDailyWordsUseCase @Inject constructor(
     private val wordRepository: WordRepository,
 ) {
-    operator fun invoke(level: WordLevel, count: Int): Flow<List<Word>> =
-        wordRepository.getDailyWords(level, count)
+    operator fun invoke(level: WordLevel, count: Int, seed: Long): Flow<List<Word>> =
+        wordRepository.getDailyWords(level, count, seed)
 }

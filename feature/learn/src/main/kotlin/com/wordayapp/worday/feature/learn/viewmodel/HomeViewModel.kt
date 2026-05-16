@@ -54,7 +54,7 @@ class HomeViewModel @Inject constructor(
                     _state.update {
                         it.copy(
                             progressState = UiState.Success(progress),
-                            todayStudied = progress.totalWordsLearned // günlük session ile güncellenir
+                            todayStudied = 0 // Will be updated once DailySession integration is complete.
                         )
                     }
                 }
@@ -62,7 +62,7 @@ class HomeViewModel @Inject constructor(
 
         viewModelScope.launch {
             getWordsDueForReview()
-                .catch { /* sessizce geç */ }
+                .catch { /* pass quietly */ }
                 .collect { words ->
                     _state.update { it.copy(reviewWords = words.take(5)) }
                 }

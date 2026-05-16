@@ -19,11 +19,16 @@ interface WordDao {
     @Query("SELECT * FROM words WHERE id = :id")
     suspend fun getWordById(id: Int): WordEntity?
 
-    @Query("SELECT * FROM words WHERE nextReviewDate <= :now")
+    @Query("SELECT * FROM words WHERE nextReviewDate <= :now AND repetitionCount > 0")
     fun getWordsDueForReview(now: Long): Flow<List<WordEntity>>
 
-    @Query("SELECT * FROM words WHERE level = :level LIMIT :count")
-    fun getDailyWords(level: String, count: Int): Flow<List<WordEntity>>
+    @Query("""
+        SELECT * FROM words 
+        WHERE level = :level AND repetitionCount = 0
+        ORDER BY (id * :seed) % 999983
+        LIMIT :count
+    """)
+    fun getDailyWords(level: String, count: Int, seed: Long): Flow<List<WordEntity>>
 
     @Query("SELECT * FROM words WHERE isSaved = 1")
     fun getSavedWords(): Flow<List<WordEntity>>
