@@ -5,11 +5,19 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.wordayapp.worday.data.local.database.dao.WordDao
 import com.wordayapp.worday.data.local.database.entity.WordEntity
+import kotlinx.coroutines.flow.MutableStateFlow
+
+object SeedState {
+    val isReady = MutableStateFlow(false)
+}
 
 object DatabaseSeeder {
 
     suspend fun seed(context: Context, wordDao: WordDao) {
-        if (wordDao.getWordCount() > 0) return  // zaten dolu
+        if (wordDao.getWordCount() > 0) {
+            SeedState.isReady.value = true  // zaten doluysa da sinyal ver
+            return
+        }
 
         val json = context.assets.open("words.json")
             .bufferedReader()
@@ -33,6 +41,7 @@ object DatabaseSeeder {
         }
 
         wordDao.insertAll(entities)
+        SeedState.isReady.value = true  // seed bitti sinyali
     }
 
     private fun mapPartOfSpeech(pos: String): String = when (pos.lowercase()) {

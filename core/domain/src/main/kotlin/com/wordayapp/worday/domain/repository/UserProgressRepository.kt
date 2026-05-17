@@ -11,4 +11,8 @@ interface UserProgressRepository {
     fun getDailySessions(limit: Int = 30): Flow<List<DailySession>>
     suspend fun resetDailyStreak()
     suspend fun incrementStreak()
+    suspend fun updateLastStudyDate(date: Long)
+    suspend fun startNewDay()
+    suspend fun updateTodaySeenCount(count: Int)
+    suspend fun completeQuiz(goal: Int)
 }

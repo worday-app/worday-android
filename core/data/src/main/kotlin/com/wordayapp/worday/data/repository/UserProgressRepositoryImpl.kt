@@ -31,28 +31,24 @@ class UserProgressRepositoryImpl @Inject constructor(
 
     override suspend fun updateProgress(progress: UserProgress) {
         val existing = userProgressDao.getProgress()
-        if (existing == null) {
-            userProgressDao.insertOrReplace(progress.toEntity())
-        } else {
-            userProgressDao.update(progress.toEntity())
-        }
+        if (existing == null) userProgressDao.insertOrReplace(progress.toEntity())
+        else userProgressDao.update(progress.toEntity())
     }
 
     override suspend fun recordDailySession(session: DailySession) =
         dailySessionDao.insertSession(session.toEntity())
 
     override fun getDailySessions(limit: Int): Flow<List<DailySession>> =
-        dailySessionDao.getRecentSessions(limit).map { list ->
-            list.map { it.toDomain() }
-        }
+        dailySessionDao.getRecentSessions(limit).map { list -> list.map { it.toDomain() } }
 
-    override suspend fun resetDailyStreak() =
-        userProgressDao.resetStreak()
+    override suspend fun resetDailyStreak() = userProgressDao.resetStreak()
+    override suspend fun incrementStreak() = userProgressDao.incrementStreak()
+    override suspend fun updateLastStudyDate(date: Long) = userProgressDao.updateLastStudyDate(date)
+    override suspend fun startNewDay() = userProgressDao.startNewDay(System.currentTimeMillis())
+    override suspend fun updateTodaySeenCount(count: Int) = userProgressDao.updateTodaySeenCount(count)
+    override suspend fun completeQuiz(goal: Int) = userProgressDao.completeQuiz(goal, System.currentTimeMillis())
 
-    override suspend fun incrementStreak() =
-        userProgressDao.incrementStreak()
-
-    // --- Mapper's ---
+    // --- Mappers ---
 
     private fun UserProgressEntity.toDomain() = UserProgress(
         userId = userId,
@@ -63,7 +59,12 @@ class UserProgressRepositoryImpl @Inject constructor(
         lastStudyDate = lastStudyDate,
         totalWordsLearned = totalWordsLearned,
         totalCorrectAnswers = totalCorrectAnswers,
-        totalAnswers = totalAnswers
+        totalAnswers = totalAnswers,
+        wordOffset = wordOffset,
+        todayOffset = todayOffset,
+        todaySeenCount = todaySeenCount,
+        lastQuizCompletedDate = lastQuizCompletedDate,
+        lastDayStartDate = lastDayStartDate
     )
 
     private fun UserProgress.toEntity() = UserProgressEntity(
@@ -75,24 +76,21 @@ class UserProgressRepositoryImpl @Inject constructor(
         lastStudyDate = lastStudyDate,
         totalWordsLearned = totalWordsLearned,
         totalCorrectAnswers = totalCorrectAnswers,
-        totalAnswers = totalAnswers
+        totalAnswers = totalAnswers,
+        wordOffset = wordOffset,
+        todayOffset = todayOffset,
+        todaySeenCount = todaySeenCount,
+        lastQuizCompletedDate = lastQuizCompletedDate,
+        lastDayStartDate = lastDayStartDate
     )
 
     private fun DailySessionEntity.toDomain() = DailySession(
-        id = id,
-        date = date,
-        wordsStudied = wordsStudied,
-        correctAnswers = correctAnswers,
-        totalAnswers = totalAnswers,
-        isCompleted = isCompleted
+        id = id, date = date, wordsStudied = wordsStudied,
+        correctAnswers = correctAnswers, totalAnswers = totalAnswers, isCompleted = isCompleted
     )
 
     private fun DailySession.toEntity() = DailySessionEntity(
-        id = id,
-        date = date,
-        wordsStudied = wordsStudied,
-        correctAnswers = correctAnswers,
-        totalAnswers = totalAnswers,
-        isCompleted = isCompleted
+        id = id, date = date, wordsStudied = wordsStudied,
+        correctAnswers = correctAnswers, totalAnswers = totalAnswers, isCompleted = isCompleted
     )
 }

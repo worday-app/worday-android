@@ -33,15 +33,25 @@ object DatabaseModule {
             context,
             WordayDatabase::class.java,
             "worday.db"
-        ).addCallback(object : RoomDatabase.Callback() {
-            override fun onCreate(db: SupportSQLiteDatabase) {
-                super.onCreate(db)
-                android.util.Log.d("DatabaseModule", "onCreate triggered!")
-                CoroutineScope(Dispatchers.IO).launch {
-                    DatabaseSeeder.seed(context, database.wordDao())
+        )
+            .fallbackToDestructiveMigration()
+            .addCallback(object : RoomDatabase.Callback() {
+                override fun onCreate(db: SupportSQLiteDatabase) {
+                    super.onCreate(db)
+                    CoroutineScope(Dispatchers.IO).launch {
+                        DatabaseSeeder.seed(context, database.wordDao())
+                    }
                 }
-            }
-        }).build()
+                override fun onOpen(db: SupportSQLiteDatabase) {
+                    super.onOpen(db)
+                    // DB zaten vardı, seed gerekmez — direkt sinyal ver
+                    CoroutineScope(Dispatchers.IO).launch {
+                        DatabaseSeeder.seed(context, database.wordDao())
+                    }
+                }
+            })
+            .build()
+
         return database
     }
 

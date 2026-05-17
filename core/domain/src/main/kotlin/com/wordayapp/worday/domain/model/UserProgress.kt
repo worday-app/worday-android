@@ -10,6 +10,11 @@ data class UserProgress(
     val totalWordsLearned: Int = 0,
     val totalCorrectAnswers: Int = 0,
     val totalAnswers: Int = 0,
+    val wordOffset: Int = 0,
+    val todayOffset: Int = 0,
+    val todaySeenCount: Int = 0,
+    val lastQuizCompletedDate: Long = 0L,
+    val lastDayStartDate: Long = 0L,
 ) {
     val accuracyRate: Float
         get() = if (totalAnswers == 0) 0f

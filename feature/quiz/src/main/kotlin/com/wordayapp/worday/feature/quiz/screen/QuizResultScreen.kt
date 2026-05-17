@@ -15,37 +15,41 @@ import com.wordayapp.worday.ui.component.WordayOutlinedButton
 fun QuizResultScreen(
     correctCount: Int,
     totalWords: Int,
+    isPassed: Boolean,
     onNavigateHome: () -> Unit,
     onRetry: () -> Unit,
 ) {
+    if (isPassed) {
+        WordayButton(text = "Anasayfaya Dön", onClick = onNavigateHome)
+    } else {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Spacer(modifier = Modifier.weight(1f))
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Spacer(modifier = Modifier.weight(1f))
+            QuizResultCard(
+                totalWords = totalWords,
+                correctCount = correctCount,
+                wrongCount = totalWords - correctCount
+            )
 
-        QuizResultCard(
-            totalWords = totalWords,
-            correctCount = correctCount,
-            wrongCount = totalWords - correctCount
-        )
+            Spacer(modifier = Modifier.weight(1f))
 
-        Spacer(modifier = Modifier.weight(1f))
+            WordayButton(
+                text = "Back to Home",
+                onClick = onNavigateHome
+            )
 
-        WordayButton(
-            text = "Back to Home",
-            onClick = onNavigateHome
-        )
+            WordayOutlinedButton(
+                text = "Try again",
+                onClick = onRetry
+            )
 
-        WordayOutlinedButton(
-            text = "Try again",
-            onClick = onRetry
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+        }
     }
 }

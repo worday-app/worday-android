@@ -9,8 +9,5 @@ class RecordDailySessionUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(session: DailySession) {
         userProgressRepository.recordDailySession(session)
-        if (session.isCompleted) {
-            userProgressRepository.incrementStreak()
-        }
     }
 }

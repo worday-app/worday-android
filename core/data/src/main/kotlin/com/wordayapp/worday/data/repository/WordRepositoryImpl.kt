@@ -19,10 +19,8 @@ class WordRepositoryImpl @Inject constructor(
             list.map { it.toDomain() }
         }
 
-    override fun getDailyWords(level: WordLevel, count: Int, seed: Long): Flow<List<Word>> =
-        wordDao.getDailyWords(level.name, count, seed).map { list ->
-            list.map { it.toDomain() }
-        }
+    override fun getDailyWords(level: WordLevel, count: Int, offset: Int): Flow<List<Word>> =
+        wordDao.getDailyWords(level.name, count, offset).map { list -> list.map { it.toDomain() } }
 
     override fun getSavedWords(): Flow<List<Word>> =
         wordDao.getSavedWords().map { list -> list.map { it.toDomain() } }
