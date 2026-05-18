@@ -8,6 +8,7 @@ import com.wordayapp.worday.data.local.datastore.UserPreferencesDataStore
 import com.wordayapp.worday.domain.model.Word
 import com.wordayapp.worday.domain.model.WordLevel
 import com.wordayapp.worday.domain.usecase.GetDailyWordsUseCase
+import com.wordayapp.worday.domain.usecase.GetUserProgressUseCase
 import com.wordayapp.worday.domain.usecase.SaveWordUseCase
 import com.wordayapp.worday.ui.tts.TtsHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -34,8 +35,8 @@ data class LearnState(
 @HiltViewModel
 class LearnViewModel @Inject constructor(
     private val getDailyWords: GetDailyWordsUseCase,
+    private val getUserProgress: GetUserProgressUseCase,
     private val saveWord: SaveWordUseCase,
-    private val dataStore: UserPreferencesDataStore,
     private val ttsHelper: TtsHelper
 ) : ViewModel() {
 
@@ -51,16 +52,15 @@ class LearnViewModel @Inject constructor(
 
     private fun loadWords() {
         viewModelScope.launch {
-            val levelName = dataStore.selectedLevel.first()
-            val goal = dataStore.dailyWordGoal.first()
-            val level = runCatching { WordLevel.valueOf(levelName) }.getOrDefault(WordLevel.A1)
+            val progress = getUserProgress().first()
+            val level = progress.level
+            val goal = progress.dailyGoal
+            val offset = progress.todayOffset
 
-            val today = java.time.LocalDate.now()
-            val seed = (today.year * 10000 + today.monthValue * 100 + today.dayOfMonth).toLong()
-
-            getDailyWords(level, goal, seed)
+            getDailyWords(level, goal, offset)
                 .catch { _state.update { it.copy(wordsState = UiState.Error("Kelimeler yüklenemedi")) } }
-                .collect { words ->
+                .first()
+                .let { words ->
                     _state.update { it.copy(wordsState = UiState.Success(words)) }
                 }
         }

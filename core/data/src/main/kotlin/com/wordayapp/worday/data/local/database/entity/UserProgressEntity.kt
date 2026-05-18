@@ -13,5 +13,10 @@ data class UserProgressEntity(
     val lastStudyDate: Long = 0L,
     val totalWordsLearned: Int = 0,
     val totalCorrectAnswers: Int = 0,
-    val totalAnswers: Int = 0
+    val totalAnswers: Int = 0,
+    val wordOffset: Int = 0,
+    val todayOffset: Int = 0,
+    val todaySeenCount: Int = 0,
+    val lastQuizCompletedDate: Long = 0L,
+    val lastDayStartDate: Long = 0L
 )

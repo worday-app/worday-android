@@ -14,15 +14,42 @@ import com.wordayapp.worday.ui.component.LoadingIndicator
 @Composable
 fun QuizScreen(
     viewModel: QuizViewModel,
-    onNavigateToResult: (correctCount: Int, totalWords: Int) -> Unit,
+    onNavigateToResult: (Int, Int, Boolean) -> Unit,
     onNavigateBack: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
 
     LaunchedEffect(state.isFinished) {
         if (state.isFinished) {
-            onNavigateToResult(state.correctCount, state.totalWords)
+            onNavigateToResult(state.correctCount, state.totalWords, state.isPassed)
         }
+    }
+
+    // Bugün zaten tamamlandı
+    if (state.isAlreadyCompleted) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.padding(32.dp)
+            ) {
+                Text("🎉", fontSize = androidx.compose.ui.unit.TextUnit(48f, androidx.compose.ui.unit.TextUnitType.Sp))
+                Text(
+                    text = "Bugünü zaten tamamladın!",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Text(
+                    text = "Yarın yeni kelimeler seni bekliyor.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                )
+            }
+        }
+        return
     }
 
     if (state.isLoading) {
@@ -38,7 +65,6 @@ fun QuizScreen(
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        // Top bar
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -72,7 +98,6 @@ fun QuizScreen(
 
         QuizWordCard(word = word)
 
-        // Seçenekler
         Column(
             verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.weight(1f)

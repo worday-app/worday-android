@@ -142,7 +142,8 @@ fun WordayNavGraph(
 
             composable(Screen.Home.route) {
                 HomeScreen(
-                    onNavigateToLearn = { navController.navigate(Screen.Learn.route) }
+                    onNavigateToLearn = { navController.navigate(Screen.Learn.route) },
+                    onNavigateToQuiz = { navController.navigate(Screen.Quiz.route) }
                 )
             }
 
@@ -157,8 +158,10 @@ fun WordayNavGraph(
                 val quizViewModel: QuizViewModel = hiltViewModel(backStackEntry)
                 QuizScreen(
                     viewModel = quizViewModel,
-                    onNavigateToResult = { correctCount, totalWords ->
-                        navController.navigate(Screen.QuizResult.createRoute(correctCount, totalWords))
+                    onNavigateToResult = { correctCount, totalWords, isPassed ->
+                        navController.navigate(
+                            Screen.QuizResult.createRoute(correctCount, totalWords, isPassed)
+                        )
                     },
                     onNavigateBack = { navController.popBackStack() }
                 )
@@ -168,14 +171,17 @@ fun WordayNavGraph(
                 route = Screen.QuizResult.route,
                 arguments = listOf(
                     navArgument("correctCount") { type = NavType.IntType },
-                    navArgument("totalWords") { type = NavType.IntType }
+                    navArgument("totalWords") { type = NavType.IntType },
+                    navArgument("isPassed") { type = NavType.BoolType }   // ← YENİ
                 )
             ) { backStackEntry ->
                 val correctCount = backStackEntry.arguments?.getInt("correctCount") ?: 0
-                val totalWords = backStackEntry.arguments?.getInt("totalWords") ?: 1 // totalWords 0 olmasın diye min 1
+                val totalWords = backStackEntry.arguments?.getInt("totalWords") ?: 1
+                val isPassed = backStackEntry.arguments?.getBoolean("isPassed") ?: false
                 QuizResultScreen(
                     correctCount = correctCount,
                     totalWords = totalWords,
+                    isPassed = isPassed,
                     onNavigateHome = {
                         navController.navigate(Screen.Home.route) {
                             popUpTo(Screen.Home.route) { inclusive = true }

@@ -23,13 +23,12 @@ interface WordDao {
     fun getWordsDueForReview(now: Long): Flow<List<WordEntity>>
 
     @Query("""
-        SELECT * FROM words 
+        SELECT * FROM words
         WHERE level = :level AND repetitionCount = 0
-        ORDER BY (id * :seed) % 999983
-        LIMIT :count
+        ORDER BY (id * 2654435761) % 999999937
+        LIMIT :count OFFSET :offset
     """)
-    fun getDailyWords(level: String, count: Int, seed: Long): Flow<List<WordEntity>>
-
+    fun getDailyWords(level: String, count: Int, offset: Int): Flow<List<WordEntity>>
     @Query("SELECT * FROM words WHERE isSaved = 1")
     fun getSavedWords(): Flow<List<WordEntity>>
 
