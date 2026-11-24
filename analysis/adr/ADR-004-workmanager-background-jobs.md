@@ -1,25 +1,22 @@
-# ADR-004: WorkManager ile Güvenilir Arka Plan İşleri
+# ADR-004: Arka plan işleri için WorkManager
 
-- Durum: Kabul edildi (mevcut yaklaşım)
-- Tarih: 24.11.2026
+- **Durum:** Kabul edildi
+- **Tarih:** 24.11.2026
 
-## Bağlam
-Seri kontrolü ve gelecekte offline değişikliklerin sunucuya aktarılması uygulama kapalıyken de çalışabilmelidir. Android işletim sistemi kesin zamanlı çalışmayı garanti etmez.
+## Neden?
+
+Bazı işler uygulama ekranda açık değilken de çalışabilmeli. Örneğin günlük kontrol işleri ve ileride eklenecek veri senkronizasyonu, uygulama kapatılıp yeniden açılsa bile planını korumalı.
+
+Android, arka plan işlerinin tam belirlenen saatte çalışacağını garanti etmez. Bu nedenle iş mantığı gecikmeye dayanıklı olmalıdır.
 
 ## Karar
-Kalıcı, ertelenebilir ve yeniden denenebilir işler WorkManager ile yürütülür. İşler unique work adıyla planlanır ve idempotent tasarlanır.
 
-## Gerekçe
-- Uygulama yeniden başlatıldığında işlerin korunması.
-- Kısıtlar ve retry/backoff desteği.
-- Android sürümleri arasında standart iş planlama.
-
-## Sonuçlar
-Olumlu: lifecycle dayanıklılığı ve retry yönetimi.
-Olumsuz: tam zamanlı tetikleme garantisi yoktur; iş mantığı çalıştığı andaki veriye göre güvenli olmalıdır.
+Kalıcı ve ertelenebilir arka plan işleri için WorkManager kullanılır. Aynı işin tekrar tekrar eklenmesini önlemek için uygun unique work politikası seçilir.
 
 ## Uygulama kuralları
-- Seri hesabı sabit 24 saat varsayımına bağlanmamalı; takvim günü ile hesaplanmalıdır.
-- Senkronizasyon işi event ID ile idempotent olmalıdır.
-- Geçici ağ hataları retry; kalıcı hatalar fail ve gözlemlenebilir olmalıdır.
-- İşler kullanıcı öğrenme akışının ön koşulu olmamalıdır.
+
+- İşler birden fazla kez çalışsa da aynı sonucu üretmeli (idempotent olmalı).
+- Günlük seri hesabı sabit 24 saat farkına göre değil, yerel takvim gününe göre yapılmalı.
+- Geçici ağ hatalarında sınırlı retry ve backoff uygulanmalı.
+- Kalıcı hatalar sessizce tekrar denenmemeli; kaydedilmeli ve izlenebilir olmalı.
+- Arka plan işi başarısız olsa bile kullanıcı kelime öğrenmeye devam edebilmeli.
