@@ -1,12 +1,10 @@
 package com.wordayapp.worday.feature.onboarding.screen
 
-import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.wordayapp.worday.domain.model.WordLevel
@@ -28,9 +26,25 @@ fun LevelTestScreen(
         return
     }
 
+    if (state.errorMessage != null) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(text = state.errorMessage, style = MaterialTheme.typography.bodyLarge)
+            Spacer(modifier = Modifier.height(16.dp))
+            TextButton(onClick = onSkip) {
+                Text("Skip level test")
+            }
+        }
+        return
+    }
+
     val word = state.currentWord ?: return
 
-    // Cevap seçildikten 800ms sonra sonraki soruya geç
     LaunchedEffect(state.selectedAnswerIndex) {
         if (state.selectedAnswerIndex != null) {
             delay(800)
@@ -44,10 +58,9 @@ fun LevelTestScreen(
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Progress
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
-                text = "Question ${state.currentIndex + 1} of ${state.words.size}",
+                text = "Question " + (state.currentIndex + 1) + " of " + state.words.size,
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
             )
@@ -59,7 +72,6 @@ fun LevelTestScreen(
             )
         }
 
-        // Word card
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -88,16 +100,8 @@ fun LevelTestScreen(
             )
         }
 
-        // Choices
-        // Gerçek uygulamada 3 yanlış + 1 doğru kelime DB'den gelir.
-        // Şimdilik Turkish karşılığı + 3 placeholder.
         val choices = remember(word) {
-            listOf(
-                word.turkish,          // index 0 = doğru
-                "placeholder 1",
-                "placeholder 2",
-                "placeholder 3"
-            ).shuffled()
+            listOf(word.turkish, "placeholder 1", "placeholder 2", "placeholder 3").shuffled()
         }
         val correctIndex = remember(choices) { choices.indexOf(word.turkish) }
 
@@ -156,7 +160,7 @@ private fun ChoiceButton(
     }
     val textColor = when (state) {
         ChoiceState.Correct -> WordayTheme.colors.learned
-        ChoiceState.Wrong -> WordayTheme.colors.wrong
+        ChoiceState.Wrong -> MaterialTheme.colorScheme.error
         ChoiceState.Idle -> MaterialTheme.colorScheme.onBackground
     }
 

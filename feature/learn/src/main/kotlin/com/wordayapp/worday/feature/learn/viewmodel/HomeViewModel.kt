@@ -3,7 +3,6 @@ package com.wordayapp.worday.feature.learn.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wordayapp.worday.common.ui.UiState
-import com.wordayapp.worday.data.local.database.seed.SeedState
 import com.wordayapp.worday.domain.model.UserProgress
 import com.wordayapp.worday.domain.model.Word
 import com.wordayapp.worday.domain.repository.UserProgressRepository
@@ -22,6 +21,7 @@ data class HomeState(
     val reviewWords: List<Word> = emptyList(),
     val currentCardIndex: Int = 0,
     val isWordsLoading: Boolean = true,
+    val wordLoadError: String? = null,
     val dailyGoal: Int = 10,
     val todayQuizCompleted: Boolean = false,
 ) {
@@ -74,33 +74,39 @@ class HomeViewModel @Inject constructor(
 
     private fun loadWords() {
         viewModelScope.launch {
-            // Seed bitene kadar bekle — zaten bittiyse anında geçer
-            SeedState.isReady.filter { it }.first()
+            try {
+                var progress = getUserProgress().first()
+                val now = System.currentTimeMillis()
 
-            var progress = getUserProgress().first()
-            val now = System.currentTimeMillis()
+                if (!isSameDay(now, progress.lastDayStartDate)) {
+                    userProgressRepository.startNewDay()
+                    progress = getUserProgress().first()
+                }
 
-            if (!isSameDay(now, progress.lastDayStartDate)) {
-                userProgressRepository.startNewDay()
-                progress = getUserProgress().first()
-            }
+                val level = progress.level
+                val goal = progress.dailyGoal
+                val todayOffset = progress.todayOffset
+                val tomorrowOffset = todayOffset + goal
 
-            val level = progress.level
-            val goal = progress.dailyGoal
-            val todayOffset = progress.todayOffset
-            val tomorrowOffset = todayOffset + goal
+                val todayWords = getDailyWords(level, goal, todayOffset).first()
+                val tomorrowWords = getDailyWords(level, goal, tomorrowOffset).first()
 
-            val todayWords = getDailyWords(level, goal, todayOffset).first()
-            val tomorrowWords = getDailyWords(level, goal, tomorrowOffset).first()
-
-            _state.update {
-                it.copy(
-                    todayWords = todayWords,
-                    tomorrowWords = tomorrowWords,
-                    isWordsLoading = false,
-                    dailyGoal = goal,
-                    currentCardIndex = progress.todaySeenCount
-                )
+                _state.update {
+                    it.copy(
+                        todayWords = todayWords,
+                        tomorrowWords = tomorrowWords,
+                        isWordsLoading = false,
+                        dailyGoal = goal,
+                        currentCardIndex = progress.todaySeenCount
+                    )
+                }
+            } catch (error: Exception) {
+                _state.update {
+                    it.copy(
+                        isWordsLoading = false,
+                        wordLoadError = "Kelime listesi yüklenemedi. Lütfen uygulamayı yeniden başlatıp tekrar dene."
+                    )
+                }
             }
         }
     }

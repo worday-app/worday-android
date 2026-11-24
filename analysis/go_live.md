@@ -7,6 +7,8 @@ Bu belge yayın öncesi kontrol listesidir. Bir maddenin burada yazması, tamaml
 ## 1. Önce çözülmesi gerekenler
 
 ### Kullanıcı verisi
+
+İlk migration ve seed düzenlemeleri `fix/room-migration-and-seed` dalında hazırlandı. Bunlar henüz build, migration testi ve eski verili cihazda doğrulanmadı; yayın koşulu olarak açık kalıyor.
 - Room'daki destructive migration kaldırılmalı ve veri koruyan migration yazılmalı.
 - Room schema dosyaları sürüm kontrolünde tutulmalı.
 - Kelime ID'leri katalog sırasından bağımsız olmalı.
