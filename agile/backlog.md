@@ -1,111 +1,215 @@
-# Worday — Ürün ve Teknik Backlog
+# Worday — Yapılacak İşler
 
-**Format:** User Story · **Öncelik:** P0 yayın engelleyici, P1 yüksek, P2 iyileştirme  
-**Not:** Maddeler statik kaynak incelemesinden türetilmiştir; her iş PR ve test kanıtıyla kapatılmalıdır.
+**Öncelikler:**  
+- **P0:** Yayın veya temel veri güvenliği için gerekli  
+- **P1:** Ürün kalitesi ve önemli eksikler  
+- **P2:** Sonraki iyileştirmeler  
 
-## Epic A — Domain ve öğrenme motoru
+Bu liste kod incelemesinden çıkarıldı. Bir iş, kodu ve ilgili testleri tamamlanmadan bitmiş sayılmaz.
 
-### US-01 — SM-2 sınır durumları [P0]
-Bir kullanıcı olarak, yanlış cevaplar ve uzun aralar sonrasında tekrar planımın tutarlı olmasını istiyorum; böylece öğrenme programım bozulmaz.
-- Kabul: kalite 0..5 dışı reddedilir; yanlış cevap tekrar sayısını sıfırlar; EF 1.3 altına inmez; 1/6 gün aralıkları doğrulanır; 100 gün gecikmiş kelime due olarak gelir.
-- Test: JUnit5; zaman kaynağı sabitlenmiş; MockK repository doğrulaması.
+## A. Öğrenme ve SM-2
 
-### US-02 — Öğrenme ekranı cevabının kaydı [P0]
-Bir kullanıcı olarak, “Biliyorum/Bilmiyorum” cevabımın öğrenme motoruna işlenmesini istiyorum.
-- Kabul: her kart yanıtı bir kez kaydedilir; SM-2 güncellenir; ilerleme uygulama kapanıp açılsa da korunur.
+### US-01 — SM-2 sınır durumlarını test et [P0]
+Yanlış cevap, uzun süre çalışmama ve geçersiz değerlerde tekrar planının bozulmamasını sağla.
 
-### US-03 — Quiz tamamlanma bütünlüğü [P0]
-Bir kullanıcı olarak, quiz sonucumun ve günlük ilerlememin tek bir tutarlı kayıt olmasını istiyorum.
-- Kabul: boş soru seti yönetilir; cevaplar çift işlenmez; quiz sonucu/session/seri güncellemesi atomik veya telafi edilebilir olur.
+**Tamamlanma koşulları**
+- Kalite yalnızca 0–5 aralığında kabul edilir.
+- Yanlış cevapta tekrar sayısı sıfırlanır.
+- Ease factor 1.3 altına düşmez.
+- İlk iki başarılı tekrar aralığı 1 ve 6 gündür.
+- Uzun süredir gecikmiş kelime tekrar listesinde görünür.
+- Tarih, aralık ve sınır durumları birim testleriyle doğrulanır.
 
-### US-04 — Onboarding seviye testi [P1]
-Bir kullanıcı olarak, doğru cevaplarıma göre uygun CEFR seviyesine yerleştirilmek istiyorum.
-- Kabul: her sorunun seçenekleri ve doğru cevap kimliği modelde tutulur; UI doğru index üretir; 0 soru bölme hatası yoktur; seviye eşikleri ürün onaylıdır.
+### US-02 — Öğrenme kartı cevaplarını kaydet [P0]
+Kullanıcının “Biliyorum/Bilmiyorum” seçimi ilerlemeye yansısın.
 
-## Epic B — Yerel veri ve offline-first
+**Tamamlanma koşulları**
+- Her cevap yalnızca bir kez kaydedilir.
+- İlgili öğrenme durumu güncellenir.
+- Uygulama kapatılıp açıldığında sonuç korunur.
+- Yanlış ve doğru cevap akışları test edilir.
 
-### US-05 — Güvenli Room migration [P0]
-Bir kullanıcı olarak, uygulama güncellendiğinde ilerlememi kaybetmek istemiyorum.
-- Kabul: destructive migration kaldırılır; schema export edilir; v1→v2 migration testi geçer.
+### US-03 — Quiz sonucunu tutarlı kaydet [P0]
+Quiz, SM-2 ve günlük oturum verileri birbiriyle uyumlu olsun.
 
-### US-06 — Güvenilir seed [P0]
-Bir kullanıcı olarak, ilk açılışta kelime kataloğunun eksiksiz ve bir kez yüklenmesini istiyorum.
-- Kabul: seed transaction içinde; hata state'i gözlenebilir; duplicate yok; UI seed completion için deadlock yaşamaz.
+**Tamamlanma koşulları**
+- Boş soru listesi hata üretmez.
+- Aynı cevap iki kez işlenmez.
+- Quiz sonucu ve günlük oturum tutarlı kaydedilir.
+- Seri aynı gün içinde yanlışlıkla birden fazla artmaz.
 
-### US-07 — Günlük oturum tarih standardı [P0]
-Bir kullanıcı olarak, seri ve günlük istatistiklerimin yerel takvim günüyle eşleşmesini istiyorum.
-- Kabul: tüm session tarihleri normalize; timezone/DST ve gün değişimi testleri var.
+### US-04 — Seviye testini tamamla [P1]
+Kullanıcının cevaplarına göre CEFR seviyesi doğru belirlensin.
 
-### US-08 — Room sorgu ve indeks optimizasyonu [P1]
-Bir kullanıcı olarak, kelime arama ve tekrar listelerinin büyük katalogda hızlı açılmasını istiyorum.
-- Kabul: sorgu planları incelenir; uygun indeksler eklenir; yinelenen DAO fonksiyonları kaldırılır.
+**Tamamlanma koşulları**
+- Soruların seçenekleri ve doğru cevapları veri modelinde bulunur.
+- Seviye hesaplama kuralları ürün tarafından onaylanır.
+- Boş test ve eksik cevap durumları yönetilir.
 
-### US-09 — Offline senkronizasyon kuyruğu [P1]
-Bir kullanıcı olarak, internet yokken yaptığım ilerlemenin bağlantı gelince kaybolmadan aktarılmasını istiyorum.
-- Kabul: yerel event UUID; WorkManager retry; idempotent push; conflict policy; kullanıcı bazlı scope.
+## B. Yerel veri ve çevrimdışı kullanım
 
-## Epic C — Backend ve AI güvenliği
+### US-05 — Room migration'ı güvenli hale getir [P0]
+Uygulama güncellendiğinde kullanıcının ilerlemesi kaybolmasın.
 
-### US-10 — Backend temel servis [P0]
-Bir kullanıcı olarak, hesabımın verilerinin güvenli bir sunucu alanında saklanmasını istiyorum.
-- Kabul: health endpoint, environment config, DB migration, request validation ve integration tests.
+**Tamamlanma koşulları**
+- Destructive migration kaldırılır.
+- Room schema dosyaları repoya eklenir.
+- Eski sürümden yeni sürüme geçiş testi geçer.
 
-### US-11 — Kimlik doğrulama ve yetkilendirme [P0]
-Bir kullanıcı olarak, yalnızca kendi ilerleme verime erişilmesini istiyorum.
-- Kabul: Firebase ID token sunucuda doğrulanır; UID token'dan çıkarılır; istemci UID'sine güvenilmez; cross-user testleri geçer.
+### US-06 — Kelime kataloğu yüklemesini güvenilir yap [P0]
+İlk açılışta katalog eksiksiz yüklensin.
 
-### US-12 — Gemini proxy ve kota [P0]
-Bir kullanıcı olarak, AI örnek cümlelerini güvenli ve adil kota ile kullanmak istiyorum.
-- Kabul: Gemini anahtarı yalnız backend'de; server-side quota/rate limit; prompt uzunluk kontrolü; log redaction.
+**Tamamlanma koşulları**
+- Seed işlemi transaction içinde yürür.
+- Aynı kelime tekrar eklenmez.
+- Hata durumu gözlenebilir.
+- Ekranlar seed işleminin tamamlanmasını beklerken takılı kalmaz.
 
-### US-13 — AI kullanım DataStore geçişi [P1]
-Bir kullanıcı olarak, ücretsiz AI kullanım hakkımı doğru görmek istiyorum.
-- Kabul: sabit 2 ve boş consumeRequest kaldırılır; kota kaynağı tek otorite olur; offline cache davranışı tanımlanır.
+### US-07 — Günlük tarih hesaplarını düzelt [P0]
+Seri ve istatistikler cihazın yerel takvim günüyle uyumlu olsun.
 
-## Epic D — Feature kalitesi
+**Tamamlanma koşulları**
+- Oturum tarihleri tek standarda göre saklanır.
+- Gün değişimi ve timezone/DST senaryoları test edilir.
 
-### US-14 — İstatistik takvim doğruluğu [P1]
-Bir kullanıcı olarak, son yedi takvim gününün eksiksiz grafiğini görmek istiyorum.
-- Kabul: boş günler sıfır; timezone normalize; tamamlanmamış session ve due kelime metrikleri ayrıştırılır.
+### US-08 — Room sorgularını gözden geçir [P1]
+Kelime arama ve tekrar listeleri büyük katalogda hızlı çalışsın.
 
-### US-15 — Kelime defteri filtreleri [P2]
-Bir kullanıcı olarak, kaydettiğim kelimeleri seviyeye ve kelime türüne göre bulmak istiyorum.
-- Kabul: filtre kombinasyonları, boş durum ve arama testleri var.
+**Tamamlanma koşulları**
+- Sorgular ve indeksler incelenir.
+- Gereksiz tekrar eden DAO metotları kaldırılır.
+- Performans gerçek cihazda ölçülür.
 
-### US-16 — Hata/empty state standardı [P1]
-Bir kullanıcı olarak, veri yokken veya ağ/DB hatasında ne yapacağımı anlamak istiyorum.
-- Kabul: her ekran loading/success/empty/error durumlarını gösterir; retry mümkün.
+### US-09 — Çevrimdışı senkronizasyon kuyruğu ekle [P1]
+İnternet yokken yapılan işlemler bağlantı geldiğinde sunucuya aktarılabilsin.
 
-### US-17 — Türkçe/İngilizce yerelleştirme [P1]
-Bir kullanıcı olarak, tüm arayüzü seçtiğim dilde görmek istiyorum.
-- Kabul: hardcoded metinler string resource'a taşınır; TR/EN kaynakları tamamlanır.
+**Tamamlanma koşulları**
+- Her olayın benzersiz ID'si vardır.
+- Room'a kayıt ile outbox kaydı tutarlıdır.
+- WorkManager geçici hatalarda tekrar dener.
+- Sunucu aynı olayı iki kez kaydetmez.
+- Çakışma kuralı belgelenir.
 
-## Epic E — Yayın ve güvence
+## C. Backend ve AI
 
-### US-18 — Test ve CI standardı [P0]
-Bir geliştirici olarak, her değişikliğin otomatik doğrulanmasını istiyorum.
-- Kabul: JUnit5, MockK, coroutine test, Room migration, UI test; CI lint/test/build raporları.
+### US-10 — Kotlin backend temelini kur [P0]
+Çalıştırılabilir bir Spring Boot servisi oluştur.
 
-### US-19 — Release güvenliği [P0]
-Bir kullanıcı olarak, yayın paketinde gizli anahtar ve hassas debug verisi bulunmamasını istiyorum.
-- Kabul: release R8 etkin; BODY logging kapalı; secret scanning; backup politikası onaylı.
+**Tamamlanma koşulları**
+- Kotlin Spring Boot uygulaması açılır.
+- Health endpoint yanıt verir.
+- PostgreSQL Docker Compose ile ayağa kalkar.
+- Flyway migration çalışır.
+- Otomatik testler geçer.
 
-### US-20 — Google Play dağıtımı [P0]
-Bir yayın sorumlusu olarak, imzalı AAB'yi tekrarlanabilir şekilde üretip test kanalına göndermek istiyorum.
-- Kabul: signing secrets GitHub Secrets; release workflow; Play internal testing; rollback/track prosedürü.
+### US-11 — Firebase kimlik doğrulamasını ekle [P0]
+Kullanıcı yalnızca kendi verisine erişebilsin.
 
-### US-21 — Gizlilik ve yasal metinler [P0]
-Bir kullanıcı olarak, verimin nasıl işlendiğini ve haklarımı açıkça öğrenmek istiyorum.
-- Kabul: gerçek SDK veri akışı envanteri; KVKK/GDPR incelemesi; yayınlanabilir privacy URL; hesap silme ve veri saklama açıklaması.
+**Tamamlanma koşulları**
+- Firebase ID token backend'de doğrulanır.
+- UID doğrulanmış token'dan alınır.
+- Geçersiz ve süresi dolmuş token reddedilir.
+- Başka kullanıcının verisine erişim testle engellenir.
 
-### US-22 — Mağaza listelemesi ve görseller [P1]
-Bir kullanıcı olarak, uygulamanın faydasını mağazada doğru anlamak istiyorum.
-- Kabul: TR/EN başlık/açıklama limitleri; ekran görüntüleri; içerik derecelendirme; Data safety beyanı.
+### US-12 — Gemini isteklerini backend'e taşı [P0]
+Mobil uygulamada Gemini API anahtarı bulunmasın.
 
-## Definition of Done
-- Kod review tamam.
-- Otomatik testler geçiyor.
-- Yeni iş kuralı dokümante edildi.
-- Hata ve loading durumları ele alındı.
-- Güvenlik/gizlilik etkisi değerlendirildi.
-- İlgili doküman güncellendi.
+**Tamamlanma koşulları**
+- Gemini anahtarı sunucu ortamında tutulur.
+- İstek uzunluğu ve kota kontrol edilir.
+- Hız sınırı ve timeout uygulanır.
+- Prompt ve kimlik bilgileri loglanmaz.
+- Android AI repository backend'i kullanır.
+
+### US-13 — AI kullanım kotasını tamamla [P1]
+Kullanıcı kalan hakkını doğru görebilsin.
+
+**Tamamlanma koşulları**
+- Sabit sayaç kaldırılır.
+- Kota tek bir güvenilir kaynaktan yönetilir.
+- Günlük/aylık sıfırlanma kuralı belirlenir.
+- Çevrimdışı durumda gösterilecek bilgi tanımlanır.
+
+## D. Ekran ve ürün kalitesi
+
+### US-14 — İstatistikleri takvim günlerine göre hesapla [P1]
+Son yedi günün verisi eksiksiz gösterilsin.
+
+**Tamamlanma koşulları**
+- Çalışılmayan günler sıfır olarak gösterilir.
+- Timezone doğru uygulanır.
+- Due kelime sayısı ile tamamlanmamış oturum sayısı ayrı tutulur.
+
+### US-15 — Kelime defterini iyileştir [P2]
+Arama ve filtreler birlikte doğru çalışsın.
+
+**Tamamlanma koşulları**
+- Filtre kombinasyonları test edilir.
+- Boş liste ve arama sonucu bulunamaması için durum tasarlanır.
+
+### US-16 — Loading, empty ve error durumlarını tamamla [P1]
+Kullanıcı ekranın neden boş olduğunu veya ne yapması gerektiğini anlayabilsin.
+
+**Tamamlanma koşulları**
+- Her ana ekran yükleniyor, başarılı, boş ve hata durumlarını yönetir.
+- Uygun yerlerde tekrar deneme sunulur.
+
+### US-17 — Türkçe ve İngilizce metinleri tamamla [P1]
+Arayüzün tüm metinleri seçilen dile uygun gösterilsin.
+
+**Tamamlanma koşulları**
+- Sabit ekran metinleri string resource'a taşınır.
+- Türkçe ve İngilizce kaynaklar tamamlanır.
+
+## E. Test ve yayın
+
+### US-18 — CI testlerini genişlet [P0]
+Her değişiklikte temel kalite kontrolleri otomatik çalışsın.
+
+**Tamamlanma koşulları**
+- Lint, unit test ve build çalışır.
+- Room migration ve kritik domain testleri CI'a eklenir.
+- Release build doğrulanır.
+
+### US-19 — Release güvenliğini tamamla [P0]
+Yayın paketinde gizli anahtar ve debug verisi bulunmasın.
+
+**Tamamlanma koşulları**
+- R8/minification test edilerek etkinleştirilir.
+- HTTP BODY logging release'te kapalıdır.
+- Secret taraması yapılır.
+- Backup kapsamı belirlenir.
+
+### US-20 — Google Play test dağıtımını hazırla [P0]
+İmzalı AAB güvenli ve tekrarlanabilir şekilde üretilebilsin.
+
+**Tamamlanma koşulları**
+- İmzalama bilgileri GitHub Secrets'ta tutulur.
+- Release workflow oluşturulur.
+- Internal testing yapılır.
+- Dağıtım ve geri alma adımları belgelenir.
+
+### US-21 — Gizlilik ve kullanım metinlerini doğrula [P0]
+Kullanıcıya gerçek veri işleme süreci doğru anlatılsın.
+
+**Tamamlanma koşulları**
+- Release sürümündeki veri akışı incelenir.
+- KVKK/GDPR metinleri hukuk danışmanına inceletilir.
+- Gizlilik politikası erişilebilir bir URL'de yayımlanır.
+- Veri silme ve saklama süreçleri açıklanır.
+
+### US-22 — Mağaza sayfasını hazırla [P1]
+Kullanıcı uygulamanın sunduğu özellikleri doğru anlayabilsin.
+
+**Tamamlanma koşulları**
+- Türkçe ve İngilizce başlık/açıklamalar hazırlanır.
+- Ekran görüntüleri ve grafikler tamamlanır.
+- İçerik derecelendirmesi ve Data safety formu doğru doldurulur.
+
+## Bir işi tamamlanmış sayma kuralı
+
+- Kod gözden geçirildi.
+- İlgili testler çalıştırıldı ve geçti.
+- Hata, boş veri ve yüklenme durumları ele alındı.
+- Güvenlik ve gizlilik etkisi kontrol edildi.
+- Gerekli doküman güncellendi.
