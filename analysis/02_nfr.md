@@ -1,98 +1,98 @@
-# Worday — Fonksiyonel Olmayan Gereksinimler (NFR)
+# Worday — Teknik Kalite Gereksinimleri
 
-**Sürüm:** 1.0 · **Durum:** Teknik taslak
+**Sürüm:** 1.1  
+**Durum:** Teknik taslak
 
-## 1. Çalışma ilkesi: offline-first
+Bu belge, Worday'in yalnızca hangi özellikleri sunduğunu değil, bu özelliklerin hangi koşullarda güvenilir çalışması gerektiğini açıklar.
 
-1. Room, öğrenme ekranlarının yerel okuma kaynağı (source of truth) olmalıdır.
-2. Günlük kelimeler, quiz, SM-2 hesaplaması, kelime defteri ve istatistikler ağ erişimine bağımlı olmamalıdır.
-3. Ağ çağrıları UI thread'i bloke etmemeli; coroutine tabanlı olmalıdır.
-4. Backend senkronizasyonu eklendiğinde yerel değişiklik önce Room'a yazılmalı, sonra WorkManager kuyruğuna alınmalıdır.
-5. Ağ yokluğu, timeout, 429 ve 5xx durumlarında yerel öğrenme kesintiye uğramamalıdır.
-6. Senkronizasyon tekrarları idempotent olmalı; aynı olay tekrar gönderildiğinde çift kayıt üretmemelidir.
-7. Çakışma çözümü kullanıcı kimliği, olay kimliği ve sunucu revizyonu üzerinden tanımlanmalıdır.
+## 1. Çevrimdışı çalışma
 
-## 2. Performans ve kaynak kullanımı
+- Günlük kelimeler, quiz, SM-2, kelime defteri ve temel istatistikler internet olmadan çalışmalıdır.
+- Room, öğrenme ekranlarının ana veri kaynağı olarak kalmalıdır.
+- Kullanıcı işlemi önce Room'a kaydedilmeli; backend senkronizasyonu daha sonra yapılmalıdır.
+- Ağ hatası, timeout, 429 veya 5xx yanıtı öğrenme akışını durdurmamalıdır.
+- Senkronizasyon tekrarlandığında aynı işlem ikinci kez kaydedilmemelidir.
+- Sunucu ile cihazdaki veriler çakışırsa uygulanacak kural açıkça tanımlanmalıdır.
 
-- İlk açılışta seed işlemi ana iş parçacığında yapılmamalıdır.
-- 5.604 kelimelik katalog toplu/transactional olarak eklenmeli ve seed tamamlanma durumu güvenilir şekilde izlenmelidir.
-- DAO sorguları indeks ve gerçek cihaz profiliyle değerlendirilmelidir.
-- Büyük listeler LazyColumn ve sayfalama/filtreleme ile sunulmalıdır.
-- AI yanıtları timeout, boyut sınırı ve kota ile korunmalıdır.
-- Uygulama açılış, ekran geçişi ve quiz cevaplama süreleri düşük/orta seviye Android cihazlarda ölçülmelidir.
+## 2. Performans
 
-## 3. Veri bütünlüğü ve kalıcılık
+- Kelime kataloğu ilk açılışta ana iş parçacığını bloke etmeden yüklenmelidir.
+- 5.604 kelimelik katalog mümkünse transaction içinde eklenmeli; işlemin tamamlandığı güvenilir biçimde izlenmelidir.
+- Arama ve tekrar sorguları gerçek cihazlarda ölçülmelidir.
+- Uzun listelerde LazyColumn ve gerektiğinde sayfalama kullanılmalıdır.
+- AI isteklerinde timeout, yanıt boyutu ve kullanım kotası sınırlandırılmalıdır.
+- Açılış, ekran geçişi ve quiz yanıt süreleri düşük/orta seviye cihazlarda kontrol edilmelidir.
 
-- Room şema sürümleri artırılırken destructive migration kullanılmamalıdır.
-- Migration testleri eski şemadan yeni şemaya veri kaybı olmadan geçişi doğrulamalıdır.
-- Günlük oturum tarihi tek bir timezone ve gün başlangıcı standardıyla normalize edilmelidir.
-- Quiz cevapları, SM-2 güncellemesi ve session tamamlanması tutarlı bir işlem sınırı içinde tasarlanmalıdır.
-- Seed işlemi tekrar çalıştırıldığında aynı kelimeyi çoğaltmamalı; katalog sürümü kontrol edilmelidir.
-- Tarih karşılaştırmaları cihaz timezone değişikliğine karşı test edilmelidir.
-- Yedekleme kapsamı, kullanıcı ilerlemesi ve kimlik bilgileri açısından açıkça tanımlanmalıdır.
+## 3. Veri güvenliği ve bütünlüğü
+
+- Room migration sırasında mevcut kullanıcı verisi silinmemelidir.
+- Şema değişiklikleri Room schema dosyalarıyla takip edilmelidir.
+- Her migration için eski verinin korunduğunu doğrulayan test bulunmalıdır.
+- Günlük oturum tarihleri aynı timezone ve gün başlangıcı kuralıyla saklanmalıdır.
+- Quiz sonucu, SM-2 güncellemesi ve oturum tamamlanması birbiriyle tutarlı olmalıdır.
+- Seed işlemi tekrar çalıştığında aynı kelimeleri çoğaltmamalıdır.
+- Cihazın saat veya timezone ayarı değiştiğinde tarih hesapları test edilmelidir.
 
 ## 4. Güvenlik
 
-- Tüm uzak trafik TLS/HTTPS üzerinden yapılmalıdır.
-- Gemini, Firebase Admin ve diğer sunucu sırları yalnızca secret manager / deployment environment içinde tutulmalıdır.
-- Android APK/AAB içine API secret, service account private key veya signing key gömülmemelidir.
-- Backend kimlik doğrulaması Firebase ID token doğrulaması veya eşdeğer güvenilir bir mekanizmayla yapılmalıdır.
-- Yetkilendirme her sorguda sunucu tarafından uygulanmalı; istemciden gelen userId güvenilir kabul edilmemelidir.
-- AI uç noktalarında kullanıcı başına kota, rate limit, input uzunluk sınırı ve kötüye kullanım koruması olmalıdır.
-- Loglarda token, API key, parola, hassas prompt veya kişisel veri tutulmamalıdır.
-- Release ortamında HTTP BODY logging kapalı olmalıdır.
-- Yedekleme ve cihaz kaybı senaryoları için veri saklama/şifreleme kararı verilmelidir.
-- Güvenlik açıkları ve bağımlılık güncellemeleri düzenli taranmalıdır.
+- Sunucuya giden tüm trafik HTTPS kullanmalıdır.
+- Gemini anahtarı, Firebase Admin kimlik bilgileri ve veritabanı parolaları Android paketinde veya Git deposunda tutulmamalıdır.
+- Backend, Firebase ID token'ını kendisi doğrulamalıdır.
+- Kullanıcı verisine erişirken istemciden gelen UID'ye güvenilmemelidir.
+- AI endpoint'lerinde istek uzunluğu, kullanıcı kotası ve hız sınırı kontrol edilmelidir.
+- Token, API anahtarı, parola ve kişisel veriler loglara yazılmamalıdır.
+- Release sürümünde HTTP BODY logging kapalı olmalıdır.
+- Bağımlılıklar ve güvenlik açıkları düzenli kontrol edilmelidir.
 
-## 5. Gizlilik ve veri koruma
+## 5. Gizlilik
 
-- Veri envanteri çıkarılmalı: hesap tanımlayıcıları, kullanıcı tercihleri, öğrenme ilerlemesi, cihaz/diagnostic verileri ve reklam tanımlayıcıları yalnızca gerçekten toplanıyorsa listelenmelidir.
-- Firebase Analytics/Crashlytics ve AdMob SDK'larının etkinliği, olayları, saklama ve paylaşım koşulları gerçek build üzerinden doğrulanmalıdır.
-- Gemini'ye gönderilen kelime/prompt verisi, aktarım amacı ve sağlayıcı şartları açıklanmalıdır.
-- Gereksiz veri toplanmamalı; saklama süreleri ve silme süreci belirlenmelidir.
-- KVKK/GDPR kapsamındaki aydınlatma, hukuki dayanak, kullanıcı hakları, çocuk kullanıcılar, uluslararası aktarım ve veri sorumlusu/işleyen rolleri hukuk incelemesinden geçirilmelidir.
-- Kullanıcı hesabı eklendiğinde hesap silme ve ilişkili verileri silme akışı sunulmalıdır.
+- Uygulamanın gerçekten topladığı veriler listelenmelidir; yalnızca projede SDK bulunması veri toplandığını kanıtlamaz.
+- Firebase, AdMob ve Gemini'nin release sürümündeki gerçek kullanımı kontrol edilmelidir.
+- AI hizmetine hangi verilerin gönderildiği kullanıcıya açıklanmalıdır.
+- Saklama süreleri, silme yöntemi ve varsa yurt dışına veri aktarımı belirlenmelidir.
+- KVKK/GDPR metinleri gerçek uygulama davranışına göre hazırlanmalı ve hukuk danışmanına inceletilmelidir.
+- Hesap özelliği eklendiğinde hesap ve ilişkili veriler için silme akışı sunulmalıdır.
 
 ## 6. Arka plan işleri
 
-- WorkManager işleri unique work adıyla idempotent planlanmalıdır.
-- Periyodik işler tam saat garantisi vermez; iş mantığı çalıştığı andaki takvim gününe göre hesaplanmalıdır.
-- Seri sıfırlama, “dün” kontrolünü sabit 24 saat çıkararak değil, yerel takvim günü üzerinden yapmalıdır.
-- Retry yalnızca geçici hatalarda uygulanmalı; kalıcı veri/şema hataları loglanıp görünür hale getirilmelidir.
-- Arka plan işi başarısızlığı öğrenme akışını engellememelidir.
-- Bildirimler kullanıcı iznine ve tercihlerine saygı göstermelidir.
+- WorkManager işleri aynı görevin gereksiz yere çoğalmasını önleyecek şekilde planlanmalıdır.
+- Android'in işleri tam saatte çalıştıracağı varsayılmamalıdır.
+- Günlük seri hesabı sabit 24 saat farkına göre değil, takvim gününe göre yapılmalıdır.
+- Yalnızca geçici hatalar yeniden denenmelidir.
+- Arka plan işi başarısız olduğunda kullanıcı temel öğrenme özelliklerini kullanabilmelidir.
+- Bildirimler kullanıcı izni ve tercihlerine uymalıdır.
 
-## 7. Gözlemlenebilirlik ve hata yönetimi
+## 7. Hata yönetimi ve kayıtlar
 
-- Crash, ANR, ağ başarısızlığı, seed hatası, sync başarısızlığı ve AI kota aşımı ölçülebilir olmalıdır.
-- Kullanıcıya teknik stack trace değil, eyleme dönük mesaj sunulmalıdır.
-- Release logları PII ve secret içermemelidir.
-- Kritik akışlar için yapılandırılmış olay adları ve sürüm bilgisi tanımlanmalıdır.
-- Telemetri devre dışı bırakma/izin tercihleri ürün ve mevzuata göre uygulanmalıdır.
+- Uygulama çökmesi, ANR, veritabanı, seed, senkronizasyon ve AI hataları izlenebilir olmalıdır.
+- Kullanıcıya teknik hata ayrıntıları yerine ne yapabileceğini anlatan mesaj gösterilmelidir.
+- Release loglarında token, prompt veya kişisel veri bulunmamalıdır.
+- Analitik olaylar kullanılacaksa adları ve neyi ölçtükleri önceden tanımlanmalıdır.
 
-## 8. Test edilebilirlik
+## 8. Test
 
-- SM-2 saf fonksiyon olmalı; zaman kaynağı enjekte edilmelidir.
-- Domain testleri JUnit 5 ile; repository ve use case etkileşimleri gerektiğinde MockK ile test edilmelidir.
-- Room DAO ve migration testleri in-memory database ile yapılmalıdır.
-- WorkManager testleri TestDriver/TestListenableWorkerBuilder ile yapılmalıdır.
-- ViewModel akışları coroutine test dispatcher ve Turbine ile doğrulanmalıdır.
-- CI lint, unit test, migration test, release build ve dependency/security kontrolünü çalıştırmalıdır.
+- SM-2 testlerinde zaman sabitlenebilir olmalıdır.
+- Domain kuralları için birim testleri yazılmalıdır.
+- Room DAO ve migration testleri çalıştırılmalıdır.
+- WorkManager işleri test ortamında doğrulanmalıdır.
+- ViewModel coroutine akışları test edilmelidir.
+- CI en azından lint, unit test ve build adımlarını çalıştırmalıdır.
+- Release build ve güvenlik kontrolleri yayın sürecine eklenmelidir.
 
-## 9. Uyumluluk ve bakım
+## 9. Bakım ve erişilebilirlik
 
-- Min/target SDK, Play target API gereklilikleri yayın tarihinde doğrulanmalıdır.
-- Release R8/minification etkinleştirilmeli; mapping dosyası güvenli saklanmalıdır.
-- Room schema ve API sözleşmeleri sürümlenmelidir.
-- Ekran metinleri string resource üzerinden yönetilmeli; Türkçe ve İngilizce yerelleştirme sağlanmalıdır.
-- Erişilebilirlik etiketleri, dinamik yazı boyutu ve kontrast test edilmelidir.
-- Her yeni modül bağımlılık yönünü korumalı; feature modülleri birbirine doğrudan bağlanmamalıdır.
+- Android SDK hedefleri yayın tarihinde Google Play gerekliliklerine uygun olmalıdır.
+- Release build için R8/minification etkinleştirilmeli ve gerçek cihazlarda test edilmelidir.
+- API ve veritabanı şemaları sürümlenmelidir.
+- Ekran metinleri string resource üzerinden yönetilmeli; Türkçe ve İngilizce desteklenmelidir.
+- Ekran okuyucu etiketleri, yazı boyutu ve renk kontrastı kontrol edilmelidir.
+- Feature modülleri birbirine doğrudan bağımlı olmamalıdır.
 
-## 10. Ölçülebilir kabul hedefleri
+## 10. Yayın öncesi kontrol edilecek ölçütler
 
-- Offline temel akış: ağ bağlantısı olmadan başarılı.
-- Veri kaybı: normal upgrade/migration senaryolarında sıfır.
-- Duplicate quiz/review event: idempotency ile sıfır.
-- Release secret sızıntısı: sıfır.
-- Kritik domain iş kuralları: otomatik test kapsamı zorunlu; hedef oran ekipçe belirlenmeli.
-- Üretim hataları: crash/ANR izleme ve sürüm geri alma planı mevcut.
+- Temel öğrenme akışı internetsiz tamamlanabiliyor.
+- Uygulama güncellemesinde kullanıcı verisi korunuyor.
+- Aynı quiz veya tekrar olayı iki kez işlenmiyor.
+- Release paketinde sunucu sırrı bulunmuyor.
+- Kritik domain kuralları otomatik testlerle doğrulanıyor.
+- Çökme takibi ve sürüm geri alma planı hazır.
