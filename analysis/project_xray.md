@@ -1,6 +1,7 @@
 # Worday — Teknik Durum
 
 **İncelenen kaynak:** `develop`  
+**İlk düzeltme dalı:** `fix/room-migration-and-seed`  
 **Güncelleme:** 24.11.2026  
 **Yöntem:** Kaynak kod ve yapılandırma dosyalarının statik incelemesi; önceki iki teknik incelemenin karşılaştırılması.
 
@@ -136,6 +137,20 @@ Feature modüllerinin `:core:data` gibi somut katmanlara doğrudan bağımlı ol
 - Testler, CI ve Worker doğrulaması.
 - Release signing, R8, log ve backup kontrolleri.
 - Gizlilik, mağaza metinleri ve içerik lisansı.
+
+## 24 Kasım — veri katmanındaki ilk düzeltmeler
+
+Bu incelemeden sonra ayrı bir dalda ilk veri güvenliği değişiklikleri yapıldı:
+
+- Room veritabanı sürümü 1'den 2'ye çıkarıldı. `words.catalogId` ve `catalog_metadata` eklendi.
+- `fallbackToDestructiveMigration()` kaldırıldı; 1 → 2 migration eklendi.
+- JSON'daki kelime kimliği artık doğrudan Room primary key olarak kullanılmıyor. `id + CEFR level` birleşiminden katalog kimliği, bundan da deterministik Room ID üretiliyor.
+- Mevcut kayıtlar İngilizce kelime, seviye ve kelime türü üzerinden eşleştirilip katalog kimliği atanıyor. Öğrenme alanları ve mevcut Room ID'leri korunuyor.
+- Seed işlemi transaction içine alındı; katalog sürümü metadata tablosunda tutuluyor.
+- Kelime repository'si katalog hazır olmadan sorgu yapmıyor. Seed hatası durumunda ana ekran ve seviye testi için hata durumu eklendi.
+- Katalog kimliği için birim testleri eklendi.
+
+Bu değişiklikler henüz Gradle build veya test ile doğrulanmadı. Room migration'ın gerçek eski veritabanı üzerinde test edilmesi, KSP'nin schema çıktısının kontrol edilmesi ve eski kurulumdan yeni sürüme geçişin cihazda denenmesi gerekiyor. Bu yüzden WD-01, WD-02 ve WD-03 kapatılmış sayılmıyor.
 
 ## İncelemenin sınırları
 
