@@ -8,6 +8,7 @@ import com.wordayapp.worday.data.local.database.WordayDatabase
 import com.wordayapp.worday.data.local.database.entity.CatalogMetadataEntity
 import com.wordayapp.worday.data.local.database.entity.WordEntity
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -22,7 +23,7 @@ sealed interface SeedStatus {
 
 object SeedState {
     private val mutableStatus = MutableStateFlow<SeedStatus>(SeedStatus.Pending)
-    val status = mutableStatus
+    val status = mutableStatus.asStateFlow()
 
     fun markLoading() {
         mutableStatus.value = SeedStatus.Loading
