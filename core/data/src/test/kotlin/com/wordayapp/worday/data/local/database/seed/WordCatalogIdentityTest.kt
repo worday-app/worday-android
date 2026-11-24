@@ -3,6 +3,7 @@ package com.wordayapp.worday.data.local.database.seed
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class WordCatalogIdentityTest {
@@ -45,7 +46,7 @@ class WordCatalogIdentityTest {
     fun stableDatabaseId_isPositive() {
         val id = WordCatalogIdentity.stableDatabaseId("example_noun:A2")
 
-        assert(id > 0)
+        assertTrue(id > 0)
     }
 
     private fun word(id: String, level: String) = WordJsonModel(
