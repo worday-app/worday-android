@@ -87,6 +87,22 @@ fun HomeScreen(
                 ) { CircularProgressIndicator() }
             }
 
+            state.wordLoadError != null -> {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.surface,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                ) {
+                    Text(
+                        text = state.wordLoadError,
+                        modifier = Modifier.padding(20.dp),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+
             state.todayQuizCompleted -> {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
