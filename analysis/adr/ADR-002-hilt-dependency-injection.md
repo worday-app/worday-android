@@ -1,26 +1,24 @@
-# ADR-002: Dependency Injection için Hilt
+# ADR-002: Bağımlılık yönetimi için Hilt
 
-- Durum: Kabul edildi (mevcut yapı)
-- Tarih: 24.11.2026
+- **Durum:** Kabul edildi
+- **Tarih:** 24.11.2026
 
-## Bağlam
-Room database, DAO, repository implementasyonları, Retrofit servisleri ve ViewModel'ler yaşam döngüsü ve bağımlılık yönetimi gerektirir.
+## Neden gerekli?
+
+Worday; veritabanı, DAO'lar, repository'ler, Retrofit servisleri ve ViewModel'ler gibi birbirine bağlı bileşenler kullanıyor. Bu nesnelerin nerede ve nasıl oluşturulduğunu tek bir yerde yönetmek gerekiyor.
 
 ## Karar
-Android uygulamasında Hilt kullanılacaktır. SingletonComponent altında database, network client ve repository binding'leri sağlanır; ViewModel'ler `@HiltViewModel` ile oluşturulur. WorkManager entegrasyonu gerektiğinde HiltWorkerFactory üzerinden yapılır.
 
-## Gerekçe
-- Android lifecycle ile bütünleşik dependency graph.
-- Constructor injection ile açık bağımlılıklar.
-- Testlerde fake/mock implementasyonla değiştirme imkânı.
-- Singleton kaynakların tek örnek olarak yönetilmesi.
-
-## Sonuçlar
-Olumlu: tekrarlanabilir wiring, daha az manuel factory, test edilebilirlik.
-Olumsuz: annotation processing/build karmaşıklığı ve graph hatalarının derleme zamanında çözülmesi gereği.
+Android tarafında bağımlılık yönetimi için Hilt kullanıyoruz. Uygulama genelinde paylaşılması gereken kaynaklar uygun Hilt bileşenlerinde tanımlanır. ViewModel'ler Hilt üzerinden oluşturulur. WorkManager ile Hilt entegrasyonu gereken işlerde WorkerFactory kullanılır.
 
 ## Uygulama kuralları
-- Mümkün olduğunda constructor injection tercih edilir.
-- `@Provides` üçüncü taraf/constructor ile üretilemeyen tiplerde; `@Binds` interface-implementation eşlemesinde kullanılır.
-- Singleton yalnızca gerçekten uygulama kapsamı paylaşılması gereken kaynaklara verilir.
-- Testlerde gerçek API anahtarı veya canlı servis kullanılmaz.
+
+- Mümkün olduğunda constructor injection kullanılır.
+- `@Binds`, interface ve implementasyon eşleştirmelerinde tercih edilir.
+- `@Provides`, Hilt'in kendisinin oluşturamadığı üçüncü taraf sınıflarda kullanılır.
+- `@Singleton` yalnızca gerçekten uygulama boyunca paylaşılması gereken nesnelere verilir.
+- Testlerde gerçek API anahtarları veya canlı servisler kullanılmaz.
+
+## Dikkat edilmesi gerekenler
+
+Hilt derleme yapılandırmasına ek yük getirir. Modüller ve scope'lar gereksiz yere büyütülmemeli; bağımlılık grafiği sade tutulmalıdır.
