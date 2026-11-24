@@ -18,8 +18,9 @@ data class LevelTestState(
     val isLoading: Boolean = true,
     val isFinished: Boolean = false,
     val detectedLevel: WordLevel = WordLevel.A1,
-    val selectedAnswerIndex: Int? = null,   // kullanıcının seçimi
-    val correctAnswerIndex: Int? = null     // doğru cevabın indexi
+    val selectedAnswerIndex: Int? = null,
+    val correctAnswerIndex: Int? = null,
+    val errorMessage: String? = null
 ) {
     val currentWord: Word? get() = words.getOrNull(currentIndex)
     val progress: Float get() = if (words.isEmpty()) 0f
@@ -40,32 +41,33 @@ class LevelTestViewModel @Inject constructor(
 
     private fun loadWords() {
         viewModelScope.launch {
-            val words = getLevelTestWords()
-            _state.value = _state.value.copy(
-                words = words,
-                isLoading = false
-            )
+            try {
+                val words = getLevelTestWords()
+                _state.value = _state.value.copy(
+                    words = words,
+                    isLoading = false,
+                    errorMessage = null
+                )
+            } catch (error: Exception) {
+                _state.value = _state.value.copy(
+                    isLoading = false,
+                    errorMessage = "Kelimeler yüklenemedi. Testi atlayıp daha sonra tekrar deneyebilirsin."
+                )
+            }
         }
     }
 
-    /**
-     * Kullanıcı bir seçenek seçti.
-     * [choiceIndex] — seçilen şık indexi (0-3)
-     * [isCorrect] — doğru mu?
-     */
     fun onAnswerSelected(choiceIndex: Int, isCorrect: Boolean) {
         val s = _state.value
-        if (s.selectedAnswerIndex != null) return  // zaten cevaplandı
+        if (s.selectedAnswerIndex != null) return
 
         val correct = if (isCorrect) s.correctCount + 1 else s.correctCount
-        // Doğru şıkkın indexini bul (UI'dan gelecek, basit mock için 0 kabul et)
         _state.value = s.copy(
             selectedAnswerIndex = choiceIndex,
             correctCount = correct
         )
     }
 
-    /** Kısa gecikme sonrası çağrılır, sonraki soruya geçer. */
     fun nextQuestion(onFinished: (WordLevel) -> Unit) {
         val s = _state.value
         val nextIndex = s.currentIndex + 1
@@ -84,6 +86,7 @@ class LevelTestViewModel @Inject constructor(
     }
 
     private fun calculateLevel(correct: Int, total: Int): WordLevel {
+        if (total == 0) return WordLevel.A1
         val ratio = correct.toFloat() / total.toFloat()
         return when {
             ratio < 0.20f -> WordLevel.A1
