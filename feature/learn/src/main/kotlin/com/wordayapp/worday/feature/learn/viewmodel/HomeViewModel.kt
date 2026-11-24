@@ -21,6 +21,7 @@ data class HomeState(
     val reviewWords: List<Word> = emptyList(),
     val currentCardIndex: Int = 0,
     val isWordsLoading: Boolean = true,
+    val wordLoadError: String? = null,
     val dailyGoal: Int = 10,
     val todayQuizCompleted: Boolean = false,
 ) {
@@ -100,7 +101,12 @@ class HomeViewModel @Inject constructor(
                     )
                 }
             } catch (error: Exception) {
-                _state.update { it.copy(isWordsLoading = false) }
+                _state.update {
+                    it.copy(
+                        isWordsLoading = false,
+                        wordLoadError = "Kelime listesi yüklenemedi. Lütfen uygulamayı yeniden başlatıp tekrar dene."
+                    )
+                }
             }
         }
     }
