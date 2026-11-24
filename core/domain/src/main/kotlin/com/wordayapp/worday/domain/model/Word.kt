@@ -18,4 +18,5 @@ data class Word(
     // User state
     val isSaved: Boolean = false,
     val isLearned: Boolean = false,
+    val catalogId: String? = null
 )
