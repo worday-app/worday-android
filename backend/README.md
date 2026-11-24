@@ -1,125 +1,115 @@
-# Worday Backend — Architecture Proposal
+# Worday Backend
 
-> This directory documents the backend boundary and initial contract. It is not yet a runnable server implementation.
+Bu dosya backend için planlanan yapıyı ve ilk API taslağını açıklar. **Şu an çalışan bir backend uygulaması değildir.** Spring Boot projesi, veritabanı tabloları ve Android senkronizasyon bağlantısı henüz oluşturulmadı.
 
-## Why a backend
+## Backend neden gerekli?
 
-The current Android application calls Gemini directly from `:core:network` and places the API key in Android BuildConfig. Any key packaged in an APK/AAB can be extracted. A server-side proxy is required before public release. A backend also enables account-scoped cloud backup/synchronization and enforceable AI quotas.
+Android uygulaması şu anda Gemini API'ye doğrudan bağlanıyor. API anahtarı uygulamanın BuildConfig alanına eklendiğinde APK/AAB içinden çıkarılabilir. Bu nedenle Gemini çağrısını sunucuya taşımamız gerekiyor.
 
-## Recommended stack
+Backend ayrıca ileride kullanıcı hesabı, cihazlar arası ilerleme senkronizasyonu ve kullanıcı bazlı AI kotası sunmamızı sağlayacak.
 
-- Kotlin + Java 21
-- Spring Boot REST API
-- PostgreSQL + Flyway
-- Firebase Authentication ID-token verification (Firebase Admin SDK)
-- Gemini API called only from server
-- Docker for local development and container deployment
+## Teknoloji seçimi
 
-This is a proposed stack, not a claim that the repository already contains these services.
+- Kotlin
+- Spring Boot
+- Java 21 çalışma ortamı
+- PostgreSQL
+- Flyway ile veritabanı migration'ları
+- Firebase Authentication ID token doğrulaması
+- Gemini API için sunucu tarafı istemci
+- Yerel geliştirme ve dağıtım için Docker
 
-## Target topology
+İlk aşamada mikroservisler yerine tek bir modüler Spring Boot uygulaması yeterli. Gereksiz servis ve operasyon yükü oluşturmadan ilerleyebiliriz.
+
+## Genel yapı
 
 ```text
-Android UI / ViewModels
+Android uygulaması
+  ├── Ekranlar ve ViewModel'ler
+  ├── Domain use case'leri
+  ├── Room (yerel veri kaynağı)
+  └── Retrofit
         |
         v
-Domain use cases + repository contracts
-        |
-        +---- Room (local source of truth; always available)
-        |
-        +---- Retrofit :core:network
-                    |
-                    v
-              Worday API (HTTPS)
-                    |
-          +---------+----------+
-          |         |          |
-       Auth       Sync       AI Proxy
-          |         |          |
-     Firebase   PostgreSQL   Gemini API
+Worday API (Kotlin + Spring Boot)
+  ├── Kimlik doğrulama: Firebase
+  ├── Senkronizasyon: PostgreSQL
+  └── AI istekleri: Gemini API
 ```
 
-## API v1 proposal
+Room, öğrenme ekranlarının yerel veri kaynağı olmaya devam edecek. Backend eklemek, kelime öğrenmek için internet bağlantısını zorunlu hale getirmeyecek.
 
-| Method | Endpoint | Purpose |
+## İlk API taslağı
+
+| Method | Endpoint | Açıklama |
 |---|---|---|
-| GET | `/api/v1/health` | Health check |
-| GET | `/api/v1/me` | Authenticated account metadata |
-| GET | `/api/v1/sync/bootstrap` | Initial remote state |
-| POST | `/api/v1/sync/push` | Upload local events idempotently |
-| GET | `/api/v1/sync/pull?cursor=...` | Pull changes after cursor |
-| POST | `/api/v1/ai/example-sentences` | Server-side Gemini proxy |
+| GET | `/api/v1/health` | Servisin ayakta olup olmadığını kontrol eder |
+| GET | `/api/v1/me` | Giriş yapan kullanıcının hesap bilgilerini döndürür |
+| GET | `/api/v1/sync/bootstrap` | İlk senkronizasyon için uzak veriyi getirir |
+| POST | `/api/v1/sync/push` | Yerel değişiklikleri sunucuya gönderir |
+| GET | `/api/v1/sync/pull?cursor=...` | Son senkronizasyondan sonraki değişiklikleri getirir |
+| POST | `/api/v1/ai/example-sentences` | Gemini üzerinden örnek cümle üretir |
 
-Protected endpoints require `Authorization: Bearer <Firebase ID token>`. The server verifies the token and derives the Firebase UID from the verified claims. A client-supplied UID must never determine data ownership.
+Kimlik doğrulaması gereken isteklerde Firebase ID token, Bearer token olarak gönderilir. Sunucu token'ı doğrular ve kullanıcı kimliğini doğrulanmış token içinden alır. İstek gövdesinde gönderilen bir `userId` değerine güvenilmez.
 
-## Initial persistence model
+## İlk veri modeli
 
-- `user_profile`: Firebase UID, preferences, created/updated timestamps.
-- `word_progress`: user UID + stable vocabulary ID, repetition count, ease factor, interval, next review time, learned/saved flags, revision.
-- `review_event`: immutable event UUID, word ID, quality, client event time, server receive time.
-- `daily_session`: client-generated UUID, normalized study date, counts and completion.
-- `sync_change`: monotonic sequence/cursor for incremental pull.
+- `user_profile`: Firebase UID ve kullanıcı tercihleri.
+- `word_progress`: Kullanıcının kelime bazında tekrar ve öğrenme durumu.
+- `review_event`: Her tekrar işlemi için benzersiz olay kaydı.
+- `daily_session`: Günlük çalışma oturumları.
+- `sync_change`: Artımlı senkronizasyon için sıra numarası veya cursor.
 
-The 5,604-word vocabulary catalog should remain bundled in the first backend milestone. Only user-specific progress is synchronized. Catalog updates require explicit catalog versioning.
+Kelime kataloğu ilk aşamada Android uygulamasında kalacak. Sunucuya yalnızca kullanıcıya ait ilerleme ve tercih verileri aktarılacak.
 
-## Offline-first synchronization contract
+## Senkronizasyon nasıl çalışacak?
 
-1. Room remains the UI read source; network calls never block learning.
-2. Every local mutation is committed to Room first.
-3. A UUID event is appended to an outbox in the same local transaction.
-4. WorkManager uploads pending events with bounded exponential backoff.
-5. Server enforces a unique constraint on (user_uid, event_id).
-6. Pull uses an opaque cursor; client applies remote changes transactionally.
-7. Conflicts are resolved per word using explicit server revisions and immutable review events.
-8. Authentication expiry pauses protected sync; local learning remains usable.
+1. Kullanıcı bir işlem yaptığında önce Room güncellenir.
+2. Aynı yerel işlem içinde benzersiz kimlikli bir senkronizasyon olayı kuyruğa eklenir.
+3. WorkManager bekleyen olayları sunucuya gönderir.
+4. Sunucu aynı olayın ikinci kez kaydedilmesini benzersiz olay kimliğiyle engeller.
+5. Android, sunucudaki yeni değişiklikleri cursor üzerinden alır ve Room'a yazar.
+6. Giriş süresi dolmuşsa senkronizasyon durur; yerel öğrenme devam eder.
 
-## Gemini security and quota
+Çakışma çözümü, veri modeli ve revision kuralları uygulamaya başlamadan önce netleştirilecek.
 
-- Remove direct Gemini endpoint/key use from Android.
-- Store `GEMINI_API_KEY` in a server secret manager/environment, never source control or mobile BuildConfig.
-- Validate word input, response size and requested sentence count.
-- Enforce per-account and per-IP rate limits and daily quota on server.
-- Do not log prompts, ID tokens or provider credentials.
-- Return typed errors for quota exceeded, provider unavailable and invalid input.
-- Treat AI output as untrusted content; render as text, not HTML.
+## Gemini güvenliği
 
-## Security baseline
+- Gemini API anahtarı yalnızca backend ortamında tutulur.
+- İstek uzunluğu ve üretilecek cümle sayısı sınırlandırılır.
+- Kullanıcı ve IP bazında hız/kota kontrolü uygulanır.
+- Token, API anahtarı ve prompt içerikleri loglara yazılmaz.
+- Sağlayıcı hataları Android'e anlaşılır hata türleriyle iletilir.
+- AI çıktısı güvenilir kod veya HTML olarak değerlendirilmez; metin olarak gösterilir.
 
-- HTTPS outside local development.
-- Firebase ID-token verification on every protected request.
-- Ownership checks at service/repository boundaries.
-- Request validation, payload limits, rate limiting and audit events.
-- Secrets manager for DB credentials, Firebase Admin credentials and Gemini key.
-- Separate dev/staging/prod environments.
-- Database backups, retention policy, deletion workflow and migration tests.
+## Geliştirme sırası
 
-## Delivery milestones
+### Aşama 1 — Backend temeli
+Kotlin Spring Boot projesi, health endpoint, PostgreSQL, Docker Compose, Flyway ve temel testler.
 
-### M0 — Backend foundation
-Create runnable Spring Boot project, health endpoint, Docker Compose PostgreSQL, Flyway and CI tests.
+### Aşama 2 — Kimlik doğrulama
+Firebase ID token doğrulaması, `/me` endpoint'i ve kullanıcılar arası veri erişim testleri.
 
-### M1 — Authentication
-Verify Firebase ID tokens, implement `/me`, test missing/expired/invalid token and cross-user access.
+### Aşama 3 — Gemini bağlantısı
+Sunucu tarafı Gemini istemcisi, kota, hız sınırı, timeout ve hata yönetimi. Ardından Android AI repository'si backend'e geçirilir.
 
-### M2 — AI proxy
-Implement Gemini server adapter, quota/rate limit, timeout, response validation and log redaction. Switch Android AI repository to backend.
+### Aşama 4 — Senkronizasyon
+Veri tabloları, bootstrap, push/pull, idempotency ve çakışma kuralları.
 
-### M3 — Sync
-Implement schema, bootstrap, idempotent push/pull, cursor and conflict contract.
+### Aşama 5 — Android entegrasyonu
+Token sağlayıcısı, API modelleri, Room outbox ve WorkManager senkronizasyonu.
 
-### M4 — Android integration
-Add auth token provider, DTOs, repository contract and Room outbox. Add WorkManager sync with retry. Preserve offline learning.
+### Aşama 6 — Yayına hazırlık
+Log/izleme, yedekleme, güvenlik testleri, veri silme akışı ve dağıtım prosedürü.
 
-### M5 — Production readiness
-Load/security tests, monitoring, backups, privacy/deletion workflows, deployment and rollback runbook.
+## İlk sürümde yapmayacaklarımız
 
-## Explicit non-goals for first release
+- Room'u kaldırıp tüm ekranları sunucudan veri okuyacak hale getirmek.
+- Kelime öğrenmeyi veya quiz'i internet bağlantısına bağlamak.
+- SM-2 hesaplamasını ağ isteğine bağımlı hale getirmek.
+- Sabit kelime kataloğunu her kurulumda sunucuya yüklemek.
+- İlk sürümde mikroservis mimarisi kurmak.
 
-- Replacing Room with remote reads.
-- Requiring connectivity for learning or quizzes.
-- Moving SM-2 to a network-dependent request.
-- Uploading the static vocabulary catalog on each installation.
+## Mevcut durum
 
-## Current status
-
-Only this architecture proposal is present. No Spring Boot source, database migrations, Docker Compose, backend tests, deployment workflow or Android sync integration has been implemented yet.
+Bu aşamada yalnızca mimari ve API taslağı hazırlanmıştır. Çalışan Spring Boot kodu, PostgreSQL migration'ı, Docker Compose yapılandırması, backend testleri ve Android senkronizasyonu henüz yoktur.
