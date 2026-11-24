@@ -1,87 +1,89 @@
-# Worday — Google Play Go-Live Rehberi
+# Worday — Google Play Yayın Kontrol Listesi
 
-**Durum:** Yayın öncesi kontrol listesi. Bu belge yayın onayı değildir.
+**Durum:** Hazırlık dokümanı. Bu listedeki maddelerin yazılı olması, yayın için tamamlandıkları anlamına gelmez.
 
-## 1. Secret ve yapılandırma yönetimi
+## 1. API anahtarları ve imzalama bilgileri
 
-### Android istemcisi
-- Gemini API secret'ını `:core:network` BuildConfig alanından kaldırın. `local.properties` veya GitHub Secret içine koymak dağıtılan uygulamada secret'ı gizlemez.
-- Gemini çağrısını backend üzerinden yapın; Android yalnızca HTTPS backend endpoint'ini ve Firebase kullanıcı token'ını kullanmalıdır.
-- Firebase Android `google-services.json` yapılandırması istemciye özel Firebase config içerir; service account private key değildir. Dosya yanlışlıkla commit edilmemeli; Firebase Security Rules, App Check ve API restriction ayrıca yapılandırılmalıdır.
-- AdMob App ID/Ad Unit ID mobil istemci yapılandırmasıdır; bunlar private secret sayılmaz. Yayın kimlikleri test kimliklerinden ayrılmalı; reklam SDK izin/consent akışı tamamlanmalıdır.
-- Signing keystore, keystore password ve key alias şifreleri kesinlikle repoya konmamalıdır.
+### Android uygulaması
+- Gemini API anahtarını Android BuildConfig'ten kaldırın. Anahtar `local.properties` üzerinden gelse bile APK/AAB içine girerse çıkarılabilir.
+- Gemini isteklerini backend üzerinden gönderin.
+- Firebase istemci yapılandırmasını service account anahtarıyla karıştırmayın. Service account private key mobil uygulamaya konulmamalıdır.
+- Firebase Security Rules, App Check ve API kısıtlamalarını ayrıca kontrol edin.
+- AdMob kullanılıyorsa test ve gerçek reklam kimliklerini ayırın; gerekli consent akışını tamamlayın.
+- Keystore ve imzalama parolalarını Git deposuna koymayın.
 
 ### Backend
-- `GEMINI_API_KEY`, Firebase Admin service account veya Workload Identity, DB credentials ve token signing secrets secret manager üzerinden sağlanmalıdır.
-- Prod/staging secret'ları ayrılmalıdır.
-- Anahtar rotasyonu, erişim politikası ve audit log tanımlanmalıdır.
-- Loglarda Authorization header, API key, kullanıcı prompt'u veya kişisel veri maskelenmelidir.
+- Gemini anahtarı, Firebase Admin kimlik bilgileri ve veritabanı parolaları sunucu secret manager veya güvenli deployment değişkenlerinde tutulmalıdır.
+- Test, staging ve production ortamlarının bilgileri ayrılmalıdır.
+- Anahtar erişimi ve yenileme süreci belirlenmelidir.
+- Authorization header, token, prompt ve kişisel veriler loglardan çıkarılmalıdır.
 
-### GitHub Actions Secrets
-Önerilen isimler:
+### GitHub Actions
+Kullanılabilecek secret adları:
 - `ANDROID_KEYSTORE_BASE64`
 - `ANDROID_KEYSTORE_PASSWORD`
 - `ANDROID_KEY_ALIAS`
 - `ANDROID_KEY_PASSWORD`
-- `PLAY_SERVICE_ACCOUNT_JSON` (Play Console API erişimi için sınırlı servis hesabı)
-- Backend deploy secrets (yalnız backend workflow environment'ında)
+- `PLAY_SERVICE_ACCOUNT_JSON`
 
-Secret'ları PR loglarına yazdırmayın. Fork PR'larında secrets erişimi kapalı kalmalıdır.
+Backend dağıtım secret'ları yalnızca ilgili backend workflow ortamına tanımlanmalıdır. PR loglarında secret değerleri yazdırılmamalıdır.
 
-## 2. Release AAB ve R8
+## 2. Release paketi
 
-Mevcut `app/build.gradle.kts` içinde `release.isMinifyEnabled = false`; bu nedenle release obfuscation etkin değildir.
+Mevcut incelemede release minification kapalı görünüyordu. Açmadan önce gerçek cihazda test edilmelidir.
 
-1. Release signing config'i environment/GitHub Secrets'tan yükleyin.
-2. Release build type içinde `isMinifyEnabled = true` ve `isShrinkResources = true` ayarlayın.
-3. `proguard-android-optimize.txt` ve proje kuralları kullanın. Rastgele geniş `-keep` kuralları eklemeyin; yalnız reflection/serialization kullanan modeller için gereken kuralları test ederek ekleyin.
-4. Room, Gson DTO, Hilt ve Firebase kullanan release build'i gerçek cihazda test edin.
-5. Mapping dosyasını build artifact'ından ayrı ve erişimi kısıtlı saklayın.
-6. VersionCode artırın; versionName ürün sürümüyle eşleşsin.
-7. Komut:
-   ```bash
-   ./gradlew clean test lint bundleRelease
-   ```
-8. AAB'yi `app/build/outputs/bundle/release/app-release.aab` konumundan alın.
-9. Play Console Internal testing'e yükleyin; Play App Signing'i etkinleştirin ve upload key'i güvenli saklayın.
+1. Release signing bilgilerini güvenli ortam değişkenlerinden yükleyin.
+2. R8/minification ve resource shrinking ayarlarını etkinleştirin.
+3. Gerekli ProGuard kurallarını gerçek build hatalarına göre ekleyin; geniş ve gereksiz keep kuralları kullanmayın.
+4. Room, Hilt, serialization ve Firebase kullanan release paketini cihazda test edin.
+5. Mapping dosyasını AAB'den ayrı ve erişimi sınırlı şekilde saklayın.
+6. VersionCode ve versionName değerlerini kontrol edin.
+7. Yerel doğrulama komutu:
 
-## 3. GitHub Actions dağıtımı
+```bash
+./gradlew clean test lint bundleRelease
+```
 
-Mevcut CI lint, unit test ve debug APK üretir. Release AAB/Play dağıtımı bulunmuyor.
+8. Oluşan AAB'yi Play Console Internal testing kanalına yükleyin.
+
+## 3. CI/CD
+
+Mevcut CI'ın lint, unit test ve debug APK adımlarını çalıştırdığı görülüyor. Release AAB üretimi ve Play dağıtımı ayrıca hazırlanmalı.
 
 Önerilen akış:
-1. PR: lint + unit tests + debug build.
-2. `v*.*.*` tag veya manuel workflow_dispatch: release build.
-3. Signing secrets ile imzalı AAB oluştur.
-4. AAB ve mapping dosyasını artifact olarak yükle.
-5. Google Play Android Publisher API ve sınırlı servis hesabıyla Internal track'e gönder.
-6. Production track dağıtımını ayrı manuel approval ile yap.
-7. Release notes ve sürüm numarası kontrolü ekle.
+- Pull request: lint, unit test ve debug build.
+- Sürüm etiketi veya manuel tetikleme: release build.
+- İmzalı AAB ve mapping dosyasını artifact olarak saklama.
+- Önce Internal testing kanalına dağıtım.
+- Production dağıtımı için ayrı manuel onay.
+- Sürüm notları ve geri alma adımlarını kontrol etme.
 
-Play dağıtımı için Fastlane supply veya resmi Google Play Developer API istemcisi kullanılabilir. Servis hesabına yalnız ilgili uygulama ve gerekli track izinleri verilmelidir.
+## 4. Play Console kontrolü
 
-## 4. Play Console yayın öncesi
+- Uygulama adı, kısa ve uzun açıklama.
+- İkon, feature graphic ve ekran görüntüleri.
+- Herkese açık HTTPS gizlilik politikası adresi.
+- Gerçek veri akışına göre Data safety formu.
+- Reklam, hedef kitle, içerik derecelendirmesi ve uygulama erişim formları.
+- Hesap oluşturma varsa hesap silme talebi için uygulama içi ve web yolu.
+- KVKK/GDPR ve uluslararası veri aktarımı incelemesi.
+- Destek e-postası ve geliştirici iletişim bilgileri.
+- Farklı ağ koşulları, uçak modu, timezone değişimi ve migration testleri.
 
-- Uygulama adı, kısa/uzun açıklama, ikon, feature graphic ve telefon ekran görüntüleri.
-- Privacy Policy herkese açık HTTPS URL.
-- Data safety formu: Firebase Analytics/Crashlytics, AdMob, Gemini/backend ve gerçek veri akışına göre doldurulmalı.
-- Ads declaration, target audience, content rating ve app access formu.
-- Hesap oluşturulabiliyorsa hesap silme talebi uygulama içinden ve web üzerinden erişilebilir olmalı.
-- KVKK/GDPR, çocuk kullanıcı ve uluslararası veri aktarımı incelemesi.
-- Uygulama içi reklam/consent ve Google Play Families politikaları (hedef kitleye göre).
-- Crash/ANR, offline, düşük ağ, timezone/DST ve migration senaryoları.
-- Support e-posta ve geliştirici iletişim bilgileri.
+## 5. Mevcut yayın engelleri
 
-## 5. Release engelleyici mevcut bulgular
+İnceleme sırasında aşağıdaki konular yayın öncesi çözülmesi gereken işler olarak belirlendi:
 
-- Gemini anahtarı istemci BuildConfig'te.
-- BODY HTTP logging açık.
+- Gemini anahtarı Android BuildConfig içinde.
+- HTTP BODY logging etkin.
 - Room destructive migration kullanıyor.
 - Release minification kapalı.
-- Test kataloğunda JUnit4 tanımlı; JUnit5 entegrasyonu doğrulanmalı.
-- CI release AAB/Play deployment yapmıyor.
-- Manifest backup açık; veri kapsamı gözden geçirilmeli.
+- JUnit5 geçişi ve test yapılandırması doğrulanmalı.
+- CI release AAB üretip Play'e dağıtmıyor.
+- Android backup ayarları kullanıcı verisi açısından gözden geçirilmeli.
+
+Bu maddelerin güncel branch'te tekrar kontrol edilmesi gerekir; kod değiştikçe durumları değişebilir.
 
 ## 6. Yayın kararı
 
-Aşağıdaki maddeler tamamlanmadan Production track'e çıkılmamalıdır: güvenlik incelemesi, gerçek veri envanteri ve Data safety beyanı, Room migration, SM-2/quiz testleri, release signing, internal testing ve crash/ANR kabul kriterleri. Hukuki metinler yayın öncesinde yetkin hukuk danışmanı tarafından gözden geçirilmelidir.
+Production yayınına geçmeden önce güvenlik, veri migration'ı, kritik testler, imzalama, gizlilik beyanları ve Internal testing tamamlanmalıdır. Gizlilik politikası ve kullanım koşulları gerçek hizmet sağlayıcı bilgileriyle doldurulmalı ve hukuk danışmanına inceletilmelidir.
