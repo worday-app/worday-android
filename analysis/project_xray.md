@@ -1,109 +1,133 @@
-# Worday — Teknik Proje Röntgeni
+# Worday — Proje Durumu
 
-- İncelenen dal: `develop`
-- İnceleme tarihi: 24.11.2026
-- Kapsam: Git ağacı (325 kayıt), Gradle yapılandırması, uygulama manifesti, navigasyon, `:core:domain`, `:core:data`, `:core:network` ve ana `:feature` ViewModel/screen dosyaları.
-- Not: Bu rapor statik kod incelemesidir. Android cihaz/emülatör üzerinde çalıştırma, Gradle build, test ve Play Console doğrulaması yapılmamıştır. Bu nedenle çalışma zamanı davranışı kesinleşmiş kabul edilmemelidir.
+**İncelenen branch:** `develop`  
+**İnceleme tarihi:** 24.11.2026  
+**İnceleme yöntemi:** Kaynak kod ve proje yapılandırmalarının statik incelenmesi
 
-## Yönetici özeti
+> Bu rapor kodun mevcut halini anlatır. Uygulama bu inceleme sırasında cihazda çalıştırılmadı; Gradle build ve test sonuçları ayrıca doğrulanmalıdır.
 
-Worday, Kotlin + Jetpack Compose tabanlı, çok modüllü bir İngilizce kelime öğrenme uygulamasıdır. Clean Architecture/MVVM yönünde anlamlı bir ayrıştırma yapılmış; yerel kelime kataloğu, Room, DataStore, SM-2, onboarding, günlük öğrenme, quiz, kelime defteri, istatistik ve Gemini örnek cümle entegrasyonu oluşturulmuştur.
+## Genel durum
 
-Mevcut durum: **işlevsel prototip / geliştirme sürümü**. Ürün akışlarının önemli bölümü kodlanmış olsa da veri bütünlüğü, test kapsamı, güvenlik, hata yönetimi, erişilebilirlik, hesap/senkronizasyon ve mağaza hazırlığı tamamlanmadan üretim sürümü olarak değerlendirilmemelidir.
+Worday, Kotlin ve Jetpack Compose ile geliştirilmiş, İngilizce kelime öğrenmeye yönelik çok modüllü bir Android uygulaması.
 
-## Modül envanteri
+Projede Clean Architecture ve MVVM yaklaşımına uygun bir ayrım kurulmuş. Kelime kataloğu, Room veritabanı, DataStore tercihleri, SM-2 tekrar algoritması, onboarding, öğrenme ekranı, quiz, kelime defteri, istatistikler ve Gemini ile örnek cümle üretimi için kod bulunuyor.
 
-| Modül | Sorumluluk | Durum |
+**Mevcut değerlendirme: geliştirme aşamasında bir prototip.** Ana özelliklerin önemli bölümü yazılmış olsa da bazı akışlar tamamlanmamış ve yayın öncesi çözülmesi gereken veri, güvenlik ve test konuları var.
+
+## Modüller
+
+| Modül | Görevi | İncelemede görülen durum |
 |---|---|---|
-| `:app` | Application, MainActivity, Navigation Compose | Başlangıç ve ana navigasyon mevcut |
-| `:core:domain` | Word/UserProgress modelleri, repository sözleşmeleri, use case'ler, SM-2 | Temel iş mantığı mevcut; test ve tarih soyutlaması eksik |
-| `:core:data` | Room, DAO, JSON seed, DataStore, repository, WorkManager | Yerel veri katmanı mevcut; migration ve veri bütünlüğü riski |
-| `:core:network` | Retrofit/OkHttp, Gemini DTO ve repository | Gemini istemcisi mevcut; istemci tarafı sır yönetimi riskli |
-| `:core:common` | UiState, UiEvent, NetworkResult, Flow yardımcıları | Ortak yapı mevcut |
-| `:core:ui` | Compose bileşenleri, tema, TTS | Temel tasarım sistemi mevcut |
-| `:feature:onboarding` | Hoş geldin, seviye testi, hedef seçimi | Akış mevcut; seviye testinde cevap/şık modeli tamamlanmalı |
-| `:feature:learn` | Ana ekran, günlük kartlar, öğrenme ekranı | Temel akış mevcut; cevapların öğrenme motoruna etkisi netleştirilmeli |
-| `:feature:quiz` | Çoktan seçmeli quiz, sonuç | Temel akış mevcut; boş liste ve oturum tamamlama edge-case'leri |
-| `:feature:stats` | Seri, başarı, haftalık grafik | Görselleştirme mevcut; veri hesaplarının doğrulanması gerekli |
-| `:feature:wordbook` | Kaydedilen kelimeler, arama ve filtre | Temel işlevler mevcut |
+| `:app` | Uygulama başlangıcı ve navigasyon | Temel yapı mevcut |
+| `:core:domain` | Modeller, repository arayüzleri, use case'ler ve SM-2 | İş kuralları mevcut; test ve zaman yönetimi iyileştirilmeli |
+| `:core:data` | Room, DAO, kelime seed işlemi, DataStore ve WorkManager | Yerel veri katmanı mevcut; migration ve seed riskleri var |
+| `:core:network` | Retrofit/OkHttp ve Gemini bağlantısı | İstemci bağlantısı mevcut; API anahtarı güvenli değil |
+| `:core:common` | Ortak UI ve sonuç modelleri | Temel yardımcı yapılar mevcut |
+| `:core:ui` | Tema, Compose bileşenleri ve TTS | Temel arayüz altyapısı mevcut |
+| `:feature:onboarding` | İlk kullanım, seviye ve hedef seçimi | Akış mevcut; seviye testi tamamlanmalı |
+| `:feature:learn` | Ana ekran ve kelime öğrenme | Temel ekranlar mevcut; kart cevapları SM-2 ile tamamıyla bağlı görünmüyor |
+| `:feature:quiz` | Çoktan seçmeli quiz ve sonuç | Temel akış mevcut; boş liste ve kayıt sırası test edilmeli |
+| `:feature:stats` | Seri ve çalışma istatistikleri | Ekran mevcut; bazı metriklerin hesabı doğrulanmalı |
+| `:feature:wordbook` | Kaydedilen kelimeler, arama ve filtre | Temel özellikler mevcut |
 
 ## Domain ve SM-2
 
-`Sm2Algorithm.calculate` kalite değerini 0..5 ile sınırlar. Başarısız cevapta tekrar sayısı sıfırlanır ve interval bir güne çekilir; başarılı cevapta ilk iki aralık 1 ve 6 gündür, sonraki aralık ease factor ile çarpılır. Ease factor alt sınırı 1.3'tür. Üç başarılı tekrar sonrası `isLearned` true olur.
+`Sm2Algorithm.calculate` kalite değerini 0–5 aralığında sınırlandırıyor. Yanlış cevapta tekrar sayısı sıfırlanıyor ve aralık bir güne çekiliyor. Başarılı cevaplarda ilk iki aralık 1 ve 6 gün; sonraki aralık ease factor üzerinden hesaplanıyor. Ease factor alt sınırı 1.3. Üç başarılı tekrar sonrasında kelime öğrenilmiş olarak işaretleniyor.
 
-Bulunan riskler:
-1. `DEFAULT_EASE_FACTOR` tanımlı ancak kullanılmıyor.
-2. `System.currentTimeMillis()` algoritmaya gömülü; deterministik test için Clock/enjekte edilen zaman gerekir.
-3. Yanlış cevapta önceki interval ve tekrar geçmişinin korunup korunmayacağı ürün kuralı olarak netleştirilmeli.
-4. Büyük gecikme (ör. 100 gün) birikmiş tekrarları nasıl sunacak? Mevcut DAO yalnızca `nextReviewDate <= now` ile geciken kelimeleri listeler; gecikme süresine göre önceliklendirme yok.
-5. Negatif/bozuk interval, taşma, geçersiz ease factor ve tekrar sayısı için giriş doğrulaması yok.
-6. `isLearned` kriteri, kullanıcının daha sonra yanlış cevap vermesi halinde yeniden false olabilir; bu davranış açıkça tanımlanmalı.
+Kontrol edilmesi gerekenler:
 
-## Data / Room
+- `DEFAULT_EASE_FACTOR` tanımlı ancak algoritmada kullanılmıyor.
+- Zaman doğrudan `System.currentTimeMillis()` üzerinden alınıyor. Testlerde sabit zaman kullanabilmek için zaman kaynağı ayrılmalı.
+- Yanlış cevapta önceki tekrar geçmişinin nasıl korunacağı net değil.
+- Uzun süre gecikmiş kelimeler için ayrı bir önceliklendirme bulunmuyor.
+- Geçersiz interval, tekrar sayısı ve ease factor değerleri test edilmeli.
+- Öğrenilmiş kelime daha sonra yanlış cevaplanırsa durumunun nasıl değişeceği ürün kuralı olmalı.
 
-Room v1; `words`, `user_progress`, `daily_sessions` tablolarını kullanır. DAO'lar kelime arama/filtreleme, due review, kaydetme, ilerleme ve günlük oturum işlevleri sağlar. Kelime kataloğu `words.json` içinden seed edilir. DataStore günlük hedef, seviye, ses, bildirim ve AI kullanım sayaçlarını tutar.
+## Yerel veri: Room ve DataStore
 
-Önemli riskler:
-- `fallbackToDestructiveMigration()` veri kaybına yol açabilir.
-- `user_progress` sabit `userId = 1` ile sorgulanır; hesap/çoklu cihaz modeline uygun değildir.
-- `DailySessionDao.getSessionByDate` tam timestamp eşitliği kullanırken Worker gün başlangıcı millis'i arıyor; oturum kaydı aynı günün başlangıcına normalize edilmezse eşleşme kaçabilir.
-- Seed işlemi Room callback içinde bağımsız `CoroutineScope` ile başlatılıyor. İlk ekranın `SeedState` sinyaline bağlı kalması; callback, hata ve uygulama süreci yeniden yaratma durumlarında gözden geçirilmeli.
-- `onCreate` ve `onOpen` seed tetikleyicileri birlikte gereksiz/yarışan iş oluşturabilir.
-- Kelime sayısı sorgularında yinelenen DAO metotları mevcut.
-- Şema migration dosyaları ve Room schema geçmişi görünmüyor.
+Room veritabanında `words`, `user_progress` ve `daily_sessions` tabloları bulunuyor. Kelime kataloğu `words.json` dosyasından yükleniyor. DataStore günlük hedef, seviye, ses, bildirim ve AI kullanım sayacı gibi tercihleri saklıyor.
 
-## Network / Gemini
+Önemli sorunlar:
 
-Gemini doğrudan Android istemcisinden çağrılıyor. API anahtarı `:core:network` BuildConfig alanına `local.properties` üzerinden aktarılıyor. Bu, kaynak kontrolüne girmese bile dağıtılan APK/AAB içinden çıkarılabilir; gizli anahtar koruması değildir.
+1. `fallbackToDestructiveMigration()` şema değişiminde kullanıcı verisini silebilir.
+2. İlerleme sorgularında sabit `userId = 1` kullanılıyor. Hesap ve cihazlar arası senkronizasyon eklendiğinde bu yapı değişmeli.
+3. Günlük oturum sorgusu timestamp eşitliği kullanıyor. Worker gün başlangıcı değerini aradığı için kayıtlar aynı standarda normalize edilmezse oturum bulunamayabilir.
+4. Seed işlemi Room callback'i içinden ayrı bir CoroutineScope ile başlatılıyor. Hata ve uygulama yeniden başlatma durumları test edilmeli.
+5. `onCreate` ve `onOpen` üzerinden seed başlatılması gereksiz tekrar veya yarış oluşturabilir.
+6. Room migration dosyaları ve schema geçmişi görünmüyor.
 
-Ayrıca AI kullanım sayacı sabit/boş implementasyon. BODY HTTP logging prompt ve yanıtları loglayabilir. Üretim öncesi çağrı backend'e taşınmalı, kullanıcı bazlı kota sunucuda uygulanmalı ve loglarda hassas içerik maskelenmelidir.
+## Ağ bağlantısı ve Gemini
 
-## Feature bulguları
+Gemini isteği şu anda Android uygulamasından doğrudan gönderiliyor. API anahtarı `:core:network` içindeki BuildConfig alanına `local.properties` üzerinden aktarılıyor. Anahtar repoya eklenmese bile dağıtılan APK/AAB içinden çıkarılabilir.
 
-### Learn
-- HomeViewModel günlük/yarın kelimelerini offset ile yüklüyor ve seed sinyalini bekliyor.
-- Kart kaydırma yalnızca görülen kart sayısını güncelliyor.
-- LearnViewModel `onKnow` ile ilerliyor; `onDontKnow` quiz rotasına geçiyor.
-- Bu akışta “biliyorum/bilmiyorum” cevaplarının SM-2 güncellemesine doğrudan bağlandığı görülmüyor.
-- Kaydetme ve TTS mevcut. TTS yaşam döngüsü temizliği var.
-- Ekran metinlerinin bir bölümü İngilizce, bir bölümü Türkçe; yerelleştirme standardı gerekli.
+AI kullanım sayacı da tamamlanmış görünmüyor: sayaç için sabit değer ve boş tüketim implementasyonu bulunuyor. HTTP BODY logging açık olduğunda istek ve yanıt içeriği loglara düşebilir.
+
+**Yapılacak:** Gemini çağrısını backend'e taşımak, kotayı sunucuda uygulamak ve loglardan prompt/kimlik bilgilerini çıkarmak.
+
+## Ekran ve özellik bulguları
+
+### Öğrenme
+- Ana ekran günlük kelimeleri yüklüyor ve seed durumunu bekliyor.
+- Kart kaydırma görülen kart sayısını güncelliyor.
+- “Biliyorum” seçimi sonraki kelimeye ilerliyor; “Bilmiyorum” quiz akışına yönlendiriyor.
+- Kart cevaplarının SM-2 ilerlemesini doğrudan güncellediği görülmüyor.
+- Kaydetme ve TTS işlevleri mevcut.
+- Bazı ekran metinleri Türkçe, bazıları İngilizce. Metinler ortak yerelleştirme kaynaklarına taşınmalı.
 
 ### Quiz
-- Günlük kelimelerden deterministik ilk karıştırma, seçenek üretimi ve 60% geçme eşiği var.
+- Günlük kelimelerden soru hazırlanıyor; seçenekler ve %60 geçme eşiği kullanılıyor.
 - Cevap seçimi SM-2 use case'ini çağırıyor.
-- Boş kelime listesinde loading state kapanmayabilir; toplam kelime sıfırken başarı oranı hesaplaması risklidir.
-- İlerleme, cevap güncellemesi ve oturum kaydı farklı coroutine'lerde yürütülüyor; işlem sıralaması/veri tutarlılığı test edilmeli.
-- Kodda debug logları var; release log politikası belirlenmeli.
-- Kullanılmayan importlar/yardımcı fonksiyonlar temizlenmeli.
+- Boş kelime listesinde loading durumunun kapanmaması ve toplam soru sıfırken başarı oranının hesaplanması sorun çıkarabilir.
+- İlerleme, cevap ve oturum kaydı farklı coroutine'lerde yürütülüyor. İşlem sırası ve veri tutarlılığı test edilmeli.
+- Debug logları release politikasıyla uyumlu hale getirilmeli.
 
-### Stats
-- UserProgress ve son 30 günlük oturumlar izleniyor.
-- Haftalık veri `sessions.takeLast(7)` ile oluşturuluyor; takvim günlerine göre boş günleri doldurma ve timezone normalize etme garantisi yok.
-- `dueCount` alanı gecikmiş kelime sayısı yerine tamamlanmamış session sayısını sayıyor olabilir; metrik tanımı doğrulanmalı.
+### İstatistikler
+- Kullanıcı ilerlemesi ve son 30 günlük oturumlar izleniyor.
+- Haftalık grafik `sessions.takeLast(7)` ile oluşturuluyor. Çalışılmayan günler ve takvim günü sınırları doğru temsil edilmeyebilir.
+- `dueCount` alanının gecikmiş kelimeleri mi yoksa tamamlanmamış oturumları mı saydığı kontrol edilmeli.
 
-### Wordbook
-- Kaydedilen kelimeler Flow ile gözleniyor; arama ve All/Learning/Learned filtreleri mevcut.
-- Kaydı kaldırma mevcut.
-- Sıralama, boş durum, hata görünümü ve filtrelerin testleri tamamlanmalı.
+### Kelime defteri
+- Kaydedilen kelimeler Flow ile izleniyor.
+- Arama ve All/Learning/Learned filtreleri bulunuyor.
+- Kayıt kaldırılabiliyor.
+- Filtre kombinasyonları, sıralama ve boş/hata durumları test edilmeli.
 
-## Güvenlik ve yayın durumu
+## Güvenlik ve yayın hazırlığı
 
-- Manifest INTERNET ve ACCESS_NETWORK_STATE izinleri içeriyor.
-- Android backup açık; backup/data extraction kuralları hassas kullanıcı verisi için gözden geçirilmeli.
-- Release minification kapalı (`isMinifyEnabled = false`).
+- Manifest'te internet ve ağ durumu izinleri bulunuyor.
+- Android backup açık; hangi kullanıcı verilerinin yedekleneceği belirlenmeli.
+- Release minification kapalı.
 - ProGuard dosyası varsayılan şablon.
-- CI lint, unit test ve debug APK üretiyor; release AAB / Play dağıtımı yok.
-- Firebase ve AdMob SDK'ları version catalog'da listeleniyor ancak mevcut manifest/uygulama akışında gerçek kullanım ve veri toplama beyanı ayrıca doğrulanmalı.
-- Gizlilik politikası ve kullanım koşulları gerçek veri akışına göre hukuk danışmanı tarafından onaylanmalı.
+- CI lint, unit test ve debug APK üretiyor; release AAB dağıtımı görünmüyor.
+- Firebase ve AdMob bağımlılıkları version catalog'da bulunuyor. Ancak bu, SDK'ların uygulamada etkin olduğu veya veri topladığı anlamına gelmez. Release build ayrıca kontrol edilmeli.
+- Gizlilik ve kullanım metinleri gerçek veri akışına göre tamamlanmalı.
 
-## Önceliklendirilmiş teknik sonuç
+## Öncelikli işler
 
-**P0 — Yayın engelleyici:** Gemini anahtarını backend'e taşıma; Room migration; günlük oturum tarih bütünlüğü; AI kota/abuse koruması; release log ve backup politikası; SM-2/quiz testleri; crash-free release doğrulaması.
+### P0 — Yayından önce
+- Gemini anahtarını mobil paketten kaldırıp backend'e taşımak.
+- Room destructive migration kullanımını kaldırmak ve migration testleri eklemek.
+- Günlük oturum tarihlerini tek standarda geçirmek.
+- SM-2 ve quiz için otomatik testleri tamamlamak.
+- Release log, backup ve imzalama ayarlarını kontrol etmek.
+- Gerçek veri akışını inceleyip gizlilik beyanlarını buna göre güncellemek.
 
-**P1 — Ürün bütünlüğü:** kullanıcı hesabı ve bulut senkronizasyonu; learn cevaplarının SM-2 ile bağlanması; haftalık istatistik hesaplarının düzeltilmesi; onboarding seviye testi; hata/empty state ve yerelleştirme.
+### P1 — Ürün akışları
+- Öğrenme kartı cevaplarını SM-2 ile doğru şekilde ilişkilendirmek.
+- Onboarding seviye testini tamamlamak.
+- Haftalık istatistikleri takvim günlerine göre hesaplamak.
+- Loading, boş ve hata ekranlarını tamamlamak.
+- Arayüzdeki Türkçe/İngilizce metinleri tutarlı hale getirmek.
+- Hesap ve senkronizasyon altyapısını geliştirmek.
 
-**P2 — Kalite:** erişilebilirlik, UI testleri, performans, analitik olay sözlüğü, mağaza varlıkları, destek/iletişim kanalları.
+### P2 — Sonraki kalite işleri
+- Erişilebilirlik ve performans testleri.
+- UI testleri.
+- Analitik olaylarının tanımlanması.
+- Mağaza görselleri ve destek kanalları.
 
-## İnceleme sınırlaması
+## İncelemenin sınırları
 
-Git ağacı eksiksiz alınmıştır; ancak her UI bileşeninin ve her kaynak satırının çalışma zamanı davranışı çalıştırılarak doğrulanmamıştır. Bu raporda “TODO bulunamadı” ifadesi, tüm kod tabanında kesinlikle TODO olmadığı anlamına gelmez. Yayın öncesi yerel `rg -n "TODO|FIXME|NotImplementedError|TODO\(" .` taraması ve tam test/build çalıştırması yapılmalıdır.
+Bu rapor kaynak kodun statik incelemesine dayanır. Uygulamanın cihazdaki davranışı, Gradle build, otomatik testler ve Play Console ayarları bu rapor kapsamında çalıştırılarak doğrulanmadı.
+
+Bu nedenle tabloda “mevcut” yazan bir özellik için bile yayın öncesinde build ve cihaz testi gerekir. Özellikle kritik akışlar için test sonucu alınmadan tamamlandı kabul edilmemelidir.
