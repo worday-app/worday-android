@@ -1,26 +1,31 @@
-# ADR-001: Çok Modüllü Clean Architecture
+# ADR-001: Uygulamanın modüllere ayrılması
 
-- Durum: Kabul edildi (mevcut yapı)
-- Tarih: 24.11.2026
+- **Durum:** Kabul edildi
+- **Tarih:** 24.11.2026
 
-## Bağlam
-Worday; domain kuralları, yerel veri erişimi, ağ entegrasyonu ve birden fazla kullanıcı arayüzü özelliği içerir. Tek modül zamanla derleme bağımlılıklarını ve değişiklik etkisini büyütebilir.
+## Neden bu kararı aldık?
+
+Worday; kelime öğrenme kuralları, yerel veritabanı, ağ bağlantıları ve farklı uygulama ekranlarından oluşuyor. Bunların tek modülde tutulması, proje büyüdükçe değişiklik yapmayı ve test yazmayı zorlaştırır.
 
 ## Karar
-Uygulama `:app`, `:core` ve `:feature` modüllerine ayrılır. Domain katmanı Android framework'ünden bağımsız iş modelleri, repository sözleşmeleri ve use case'leri barındırır. Data/network katmanları sözleşmeleri uygular. Feature modülleri ekran ve ViewModel sorumluluğunu üstlenir.
 
-## Gerekçe
-- İş kuralları UI ve veri kaynağından ayrılır.
-- Modüller bağımsız test ve geliştirmeye daha elverişlidir.
-- Derleme kapsamı ve sahiplik sınırları daha iyi yönetilir.
-- Gelecekte backend, yeni veri kaynağı veya platform adaptasyonu eklenebilir.
+Projeyi `:app`, `:core` ve `:feature` modüllerine ayırıyoruz.
 
-## Sonuçlar
-Olumlu: sorumluluk ayrımı, test edilebilirlik, ölçeklenebilir ekip çalışması.
-Olumsuz: Gradle yapılandırması ve bağımlılık yönetimi karmaşıklaşır; aşırı modülerleştirme küçük değişikliklerde maliyet doğurabilir.
+- `:core:domain`: İş modelleri, repository arayüzleri ve use case'ler.
+- `:core:data`: Room ve yerel veri işlemleri.
+- `:core:network`: API bağlantıları ve ağ modelleri.
+- `:feature:*`: İlgili ekranlar ve ViewModel'ler.
+- `:app`: Uygulamanın başlangıç noktası ve modüllerin bir araya geldiği katman.
 
-## Kurallar
-- Domain, Android UI veya Retrofit/Room tiplerine bağımlı olmamalıdır.
-- Feature modülleri başka feature modüllerini doğrudan çağırmamalıdır.
-- Bağımlılık yönü dış katmanlardan domain sözleşmelerine doğru olmalıdır.
-- `:app` composition root olarak modülleri birleştirmelidir.
+## Bu kararın sonucu
+
+İş kuralları ekranlardan ve veri kaynağından bağımsız kalır. Böylece domain kodunu ayrı test edebilir, veri kaynağını değiştirdiğimizde ekranları mümkün olduğunca koruyabiliriz.
+
+Bunun karşılığında Gradle ayarları ve modüller arası bağımlılıklar daha dikkatli yönetilmelidir.
+
+## Uyulacak kurallar
+
+- Domain katmanı Android, Room veya Retrofit sınıflarını doğrudan kullanmaz.
+- Feature modülleri birbirine doğrudan bağımlı olmaz.
+- Veri ve ağ katmanları domain arayüzlerini uygular.
+- Modüller uygulama başlangıcında `:app` içinde birleştirilir.
