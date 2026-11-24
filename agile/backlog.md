@@ -7,22 +7,26 @@ Bu liste iki teknik incelemede çıkan ortak ve ek bulgular birleştirilerek haz
 - **P1:** Temel ürün akışını ve güvenilirliği etkiliyor.
 - **P2:** Kalite ve sonraki sürüm iyileştirmesi.
 
+## Güncel çalışma
+
+`fix/room-migration-and-seed` dalında WD-01, WD-02 ve WD-03 için ilk kod değişiklikleri yapıldı. Build, test ve cihaz doğrulaması bekleniyor; bu işler henüz kapatılmadı.
+
 ## 1. Veri ve kelime kataloğu
 
-### WD-01 — Room migration'ı güvenli hale getir [P0]
-- Destructive migration kaldırılmalı.
+### WD-01 — Room migration'ı güvenli hale getir [P0] — Doğrulama bekliyor
+- Destructive migration kaldırılmalı. Kod değişikliği yapıldı; migration testi henüz çalıştırılmadı.
 - Room schema dosyaları sürüm kontrolüne alınmalı.
 - Mevcut kullanıcı verisini koruyan migration yazılmalı.
 - Eski şemadan yeni şemaya geçiş testi geçmeli.
 
-### WD-02 — Kelime ID'lerini kalıcı hale getir [P0]
+### WD-02 — Kelime ID'lerini kalıcı hale getir [P0] — Doğrulama bekliyor
 - Kelime kimliği JSON sırasına bağlı olmamalı.
-- Her kelimenin sabit ve benzersiz ID'si olmalı.
+- Her kelimenin sabit ve benzersiz ID'si olmalı. Katalog kimliği ve deterministik Room ID eklendi; build ve katalog testi bekliyor.
 - Var olan ilerleme kayıtları yeni ID'lerle eşleştirilmeli.
 - Katalog sırası değiştiğinde kullanıcı ilerlemesi aynı kelimede kalmalı.
 
-### WD-03 — Seed sürecini güvenilir yap [P0]
-- Seed tek transaction içinde tamamlanmalı.
+### WD-03 — Seed sürecini güvenilir yap [P0] — Doğrulama bekliyor
+- Seed tek transaction içinde tamamlanmalı. Transaction ve katalog sürümü eklendi; gerçek veritabanında doğrulama bekliyor.
 - Aynı katalog ikinci kez yüklenince kayıt çoğalmamalı.
 - Seed sürümü saklanmalı.
 - Hata durumunda ekranlar sonsuz yüklenmede kalmamalı.
