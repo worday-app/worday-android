@@ -1,128 +1,113 @@
-# Worday — İş Gereksinimleri Dokümanı (BRD)
+# Worday — Ürün Gereksinimleri
 
-**Sürüm:** 1.0 · **Tarih:** 24.11.2026 · **Durum:** Koddan geriye doğru çıkarılmış taslak
+**Sürüm:** 1.1  
+**Tarih:** 24.11.2026  
+**Durum:** Mevcut uygulama incelenerek hazırlanmış taslak. Ürün kararları ayrıca onaylanmalıdır.
 
-## 1. Amaç ve kapsam
+## 1. Worday ne yapıyor?
 
-Worday, Türkçe konuşan kullanıcıların İngilizce kelime dağarcığını CEFR A1–C2 seviyelerinde, günlük öğrenme oturumları, aralıklı tekrar (SM-2), quiz, kişisel kelime defteri ve isteğe bağlı yapay zekâ örnek cümleleriyle geliştirmesini sağlayan Android uygulamasıdır.
+Worday, Türkçe arayüzle İngilizce kelime öğrenmeye yardımcı olan bir Android uygulamasıdır. Kullanıcılar seviyelerine uygun kelimeleri çalışabilir, quiz çözebilir, zorlandıkları kelimeleri tekrar edebilir ve ilerlemelerini takip edebilir.
 
-İlk sürüm Android odaklıdır. Temel öğrenme işlevleri internet bağlantısı olmadan çalışmalıdır. Hesap ve çoklu cihaz senkronizasyonu, bu kod tabanında mevcut olmayan ancak backend yol haritasında ele alınan sonraki kapsamdır.
+Temel öğrenme özellikleri internet bağlantısı olmadan da çalışmalıdır. AI ile örnek cümle oluşturma gibi çevrimiçi özellikler bağlantı gerektirir.
 
-## 2. Paydaşlar ve kullanıcı profilleri
+## 2. Hedef kullanıcı
 
-- Son kullanıcı: İngilizce öğrenen, Türkçe arayüz kullanan kişi.
-- Ürün sahibi: Worday ürün ekibi.
-- Teknik ekip: Android ve backend geliştiricileri.
-- Harici hizmet sağlayıcılar: Google/Firebase, Gemini API sağlayıcısı, AdMob (etkinleştirildiği durumda).
+İngilizce kelime dağarcığını düzenli çalışmayla geliştirmek isteyen kullanıcılar. Uygulama A1–C2 seviyelerini hedefler.
 
-## 3. Ürün hedefleri
+## 3. Ürünün temel hedefleri
 
-1. Kullanıcıya seviyesine uygun kelimeleri düzenli sunmak.
-2. Kelimelerin unutulmasını azaltmak için SM-2 tabanlı tekrar planlamak.
-3. Günlük hedef ve quiz ile öğrenme alışkanlığı oluşturmak.
-4. Kullanıcının zorlandığı kelimeleri daha sık tekrar ettirmek.
-5. Öğrenme ilerlemesini ölçülebilir göstergelerle sunmak.
-6. AI örnek cümlelerini isteğe bağlı bir destek olarak sunmak.
-7. İnternet kesintisinde temel öğrenme deneyimini korumak.
+- Kullanıcıya seviyesine uygun kelimeler sunmak.
+- Tekrar zamanını SM-2 algoritmasıyla planlamak.
+- Günlük hedef ve quiz ile düzenli çalışma alışkanlığı oluşturmak.
+- Kaydedilen kelimeleri tek bir yerde toplamak.
+- Çalışma geçmişini anlaşılır şekilde göstermek.
+- AI örnek cümlelerini isteğe bağlı destek olarak sunmak.
+- İnternet olmadığında temel öğrenme akışını korumak.
 
-## 4. Kapsam içi işlevler
+## 4. İşlevsel gereksinimler
 
-### 4.1 İlk kullanım ve seviye
-- Kullanıcı onboarding akışını başlatabilmeli veya seviye testini atlayabilmelidir.
-- Seviye testi sonuçları A1, A2, B1, B2, C1 veya C2 olarak sınıflandırılmalıdır.
+### 4.1 İlk kullanım
+- Kullanıcı onboarding akışını tamamlayabilmeli veya seviye testini atlayabilmelidir.
+- Seviye A1, A2, B1, B2, C1 veya C2 olarak belirlenebilmelidir.
 - Kullanıcı günlük kelime hedefini seçebilmelidir.
-- Seviye ve hedef yerel olarak saklanmalıdır.
+- Seviye ve hedef cihazda saklanmalıdır.
 
-### 4.2 Günlük öğrenme
-- Kullanıcı seçilen seviyeye ait günlük kelime setini görmelidir.
-- Kelime kartında İngilizce kelime, Türkçe karşılık, tanım, IPA ve örnek cümleler sunulmalıdır.
-- Kullanıcı kartı bildiğini/bilmediğini belirtebilmelidir.
-- Kullanıcı kelime telaffuzunu cihaz TTS motoruyla dinleyebilmelidir.
-- Kullanıcı kelimeyi kişisel kelime defterine ekleyip çıkarabilmelidir.
-- Günlük hedef tamamlanmadan sonraki günün kelimeleri kilitli kalmalıdır (mevcut UI davranışından çıkarılmış kural).
+### 4.2 Kelime öğrenme
+- Günlük kelimeler kullanıcının seviyesine göre gösterilmelidir.
+- Kelime ekranında İngilizce kelime, Türkçe karşılık, açıklama, IPA ve örnekler bulunmalıdır.
+- Kullanıcı kelimeyi bildiğini veya bilmediğini belirtebilmelidir.
+- Telaffuz cihazın metin okuma özelliğiyle dinlenebilmelidir.
+- Kelime kişisel kelime defterine eklenip çıkarılabilmelidir.
+- Günlük hedef ve sonraki günün kelimelerine erişim kuralı net olmalıdır.
 
-### 4.3 Aralıklı tekrar (SM-2)
-- Quiz/tekrar cevabı kalite puanına dönüştürülmelidir.
-- Kalite 0–2 başarısız, 3–5 başarılı kabul edilmelidir.
-- Başarısız cevap tekrar sayısını sıfırlamalı ve sonraki tekrar aralığını bir güne çekmelidir.
-- Başarılı cevap tekrar sayısını artırmalı; ilk aralıklar 1 ve 6 gün olmalı, sonraki aralık ease factor ile hesaplanmalıdır.
-- Ease factor 1.3 altına düşmemelidir.
-- Üç başarılı tekrar sonrası kelime öğrenilmiş olarak işaretlenmelidir.
-- Due kelimeler, sonraki tekrar zamanı geldiğinde tekrar listesine alınmalıdır.
-- Algoritmanın tarih ve sınır durumları testlerle güvence altına alınmalıdır.
+### 4.3 Tekrar sistemi
+- Quiz cevabı SM-2 algoritmasına uygun kalite puanına dönüştürülmelidir.
+- Kalite 0–2 başarısız, 3–5 başarılı kabul edilir.
+- Başarısız cevapta tekrar sayısı sıfırlanır ve sonraki aralık bir gün olur.
+- Başarılı cevaplarda ilk iki aralık 1 ve 6 gündür; sonraki aralık ease factor ile hesaplanır.
+- Ease factor 1.3 değerinin altına düşmez.
+- Üç başarılı tekrar sonrası kelime öğrenilmiş sayılır.
+
+Bu kurallar mevcut algoritmadan çıkarılmıştır. Yanlış cevap geçmişinin nasıl korunacağı ve öğrenilmiş kelimenin tekrar yanlış cevaplanınca ne olacağı ürün kararı olarak netleştirilmelidir.
 
 ### 4.4 Quiz
-- Günlük kelimelerden soru oluşturulmalıdır.
-- Her soru için doğru Türkçe karşılık ve mümkünse üç farklı çeldirici gösterilmelidir.
-- Kullanıcı bir soruya yalnızca bir kez cevap verebilmelidir.
-- Cevap sonucu görünür olmalı, ardından sonraki soruya geçilmelidir.
-- Başarı eşiği mevcut kodda %60'tır; ürün sahibi tarafından onaylanmalıdır.
-- Başarılı quiz günlük hedefi tamamlamalı ve seri hesabını güncellemelidir.
-- Aynı gün ikinci kez günlük quiz başlatma davranışı açıkça tanımlanmalıdır.
+- Sorular günlük kelimelerden hazırlanmalıdır.
+- Her soruda doğru cevap ve mümkünse üç çeldirici bulunmalıdır.
+- Bir soru yalnızca bir kez cevaplanmalıdır.
+- Cevaptan sonra kullanıcıya sonuç gösterilmelidir.
+- Mevcut kodda geçme eşiği %60'tır. Yayın öncesi onaylanmalıdır.
+- Quiz sonucu, günlük oturum ve seri bilgisi tutarlı güncellenmelidir.
+- Aynı gün tekrar quiz başlatma davranışı tanımlanmalıdır.
 
 ### 4.5 Kelime defteri
 - Kaydedilen kelimeler listelenmelidir.
-- İngilizce ve Türkçe alanlarda arama yapılmalıdır.
-- Tümü, öğreniliyor ve öğrenildi filtreleri sunulmalıdır.
-- Kaydedilen kelime listeden çıkarılabilmelidir.
+- İngilizce ve Türkçe alanlarda arama yapılabilmelidir.
+- Tümü, öğreniliyor ve öğrenildi filtreleri bulunmalıdır.
+- Kullanıcı kelimeyi listeden çıkarabilmelidir.
 
 ### 4.6 İstatistikler
-- Güncel ve en uzun öğrenme serisi gösterilmelidir.
-- Toplam öğrenilen kelime ve doğruluk oranı gösterilmelidir.
-- Haftalık çalışma verisi takvim günleriyle tutarlı sunulmalıdır.
-- İstatistikler yalnızca başarılı quizleri değil, ürünün onaylayacağı tüm çalışma olaylarını doğru tanımlamalıdır.
+- Güncel ve en uzun çalışma serisi gösterilmelidir.
+- Öğrenilen kelime sayısı ve quiz doğruluğu gösterilmelidir.
+- Haftalık grafik son yedi takvim gününü doğru yansıtmalıdır.
+- Her metriğin nasıl hesaplandığı açıkça tanımlanmalıdır.
 
 ### 4.7 AI örnek cümleleri
-- Kullanıcı bir kelime için doğal İngilizce örnek cümle talep edebilmelidir.
-- AI isteği başarısız olursa temel öğrenme akışı etkilenmemelidir.
-- Kota, hız sınırı ve sağlayıcı hataları kullanıcıya anlaşılır biçimde sunulmalıdır.
-- Gemini erişimi sunucu tarafında tutulmalıdır; istemciye gizli anahtar dağıtılmamalıdır.
-- AI özelliği internet bağlantısı gerektirir; kelime öğrenmenin geri kalanı çevrimdışı sürmelidir.
+- Kullanıcı seçtiği kelime için örnek cümle isteyebilmelidir.
+- AI isteği başarısız olsa bile kelime öğrenme ve quiz çalışmaya devam etmelidir.
+- Kota ve bağlantı hataları anlaşılır biçimde gösterilmelidir.
+- Gemini anahtarı Android uygulamasında tutulmamalı; istek backend üzerinden yapılmalıdır.
 
-## 5. İş kuralları ve açık kararlar
+## 5. Şu anki koddan görülen varsayılanlar
 
-| Kural | Mevcut koddan çıkarım | Ürün kararı gerekli mi? |
+| Konu | Mevcut durum | Netleştirilecek konu |
 |---|---|---|
-| Günlük hedef varsayılanı | 10 kelime | Hayır |
-| Seviye varsayılanı | A1 | Onboarding davranışı doğrulanmalı |
-| Quiz geçme eşiği | %60 | Evet, ürün onayı |
-| SM-2 kalite | Doğru=4, yanlış=1 kısa yolu | Evet, 0–5 kullanıcı deneyimi |
-| Öğrenilmiş kelime | 3 başarılı tekrar | Evet, öğrenme tanımı |
-| Günlük seri | Başarılı quiz sonrası artış | Evet, öğrenme oturumu kuralı |
-| AI ücretsiz kota | Şu an sabit 2 / tüketim boş | Evet, plan ve kota |
-| Kullanıcı hesabı | Mevcut uygulamada yok | Backend kapsam kararı |
-| Veri senkronizasyonu | Mevcut değil | Backend kapsam kararı |
+| Günlük hedef | 10 kelime | Kullanıcı değiştirebiliyor mu, sınırlar ne? |
+| Başlangıç seviyesi | A1 | Seviye testi atlanınca ne olur? |
+| Quiz geçme puanı | %60 | Ürün onayı |
+| SM-2 doğru cevap | Kalite 4 | Kullanıcı cevabı kaliteye nasıl çevrilir? |
+| SM-2 yanlış cevap | Kalite 1 | Yanlış cevap geçmişi nasıl etkiler? |
+| Öğrenilmiş kelime | 3 başarılı tekrar | Ürün tanımı |
+| AI kotası | Kodda sabit 2; tüketim akışı tamamlanmamış | Ücretsiz kota ve sıfırlanma süresi |
+| Hesap/senkronizasyon | Henüz yok | Backend kapsamı |
 
-## 6. İşlevsel olmayan beklentiler
+## 6. Yayın için temel beklentiler
 
-- Temel kelime öğrenme ve quiz internet olmadan çalışmalıdır.
-- Kullanıcı verisi cihazda kalıcı saklanmalıdır.
-- Ağ hataları uygulamanın çökmesine neden olmamalıdır.
-- Kullanıcı verileri hesap bazında ayrıştırılmalıdır (hesap özelliği devreye alındığında).
-- Uygulama verileri ve üçüncü taraf SDK davranışı şeffaf biçimde açıklanmalıdır.
-- Erişilebilirlik, yerelleştirme, performans ve veri yedekleme politikaları yayın öncesi tamamlanmalıdır.
+- Uygulamanın temel öğrenme akışı uçak modunda çalışmalıdır.
+- Kelime ve ilerleme verileri uygulama kapatılıp açıldığında korunmalıdır.
+- Güncelleme sırasında kullanıcı verisi silinmemelidir.
+- Ağ veya AI hatası uygulamanın çökmesine neden olmamalıdır.
+- Kullanıcı verileri hesap özelliği eklendiğinde hesap bazında ayrılmalıdır.
+- Gizlilik metni ve mağaza beyanları gerçek veri akışını anlatmalıdır.
 
-## 7. Kabul ölçütleri
-
-- İlk kurulumda kelime kataloğu güvenilir biçimde hazırlanır.
-- Uygulama uçak modunda açılır; günlük kelimeler, quiz ve kelime defteri çalışır.
-- Quiz cevabı SM-2 alanlarını beklenen şekilde günceller.
-- Aynı cevap çift işlenmez.
-- Günlük seri aynı takvim gününde birden fazla artırılmaz.
-- İstatistikler gerçek oturum verileriyle tutarlıdır.
-- AI hatası yerel öğrenmeyi engellemez.
-- Veri kaybı olmadan uygulama sürümü yükseltilebilir.
-- Release paketi güvenlik, gizlilik ve Play Console kontrollerini geçer.
-
-## 8. Kapsam dışı / sonraki sürüm
+## 7. İlk sürüm dışında kalanlar
 
 - iOS uygulaması.
-- Sosyal ağ ve arkadaş sıralaması.
-- Öğretmen/kurum paneli.
-- Abonelik ve ücretli AI paketleri (iş modeli kararı alınana kadar).
-- Uzak kelime kataloğu yönetimi.
+- Sosyal özellikler ve arkadaş sıralaması.
+- Öğretmen veya kurum paneli.
 - Web istemcisi.
+- Ücretli AI paketleri ve abonelik (iş modeli kararı verilene kadar).
+- Uzaktan kelime kataloğu yönetimi.
 
-## 9. Varsayımlar
+## 8. Notlar
 
-Bu doküman mevcut kaynak koddan türetilmiştir; ürün sahibi onayı alınmamış eşikler ve davranışlar kesin gereksinim sayılmaz. Gerçek kişisel veri kategorileri, Firebase/AdMob etkinliği, veri saklama süreleri ve hukuki dayanaklar dağıtım yapılandırması üzerinden ayrıca doğrulanmalıdır.
+Bu doküman mevcut koddan çıkarılan gereksinimleri ve henüz karara bağlanmamış ürün konularını birlikte içerir. Tablodaki açık kararlar onaylanmadan kesin ürün kuralı sayılmamalıdır.
