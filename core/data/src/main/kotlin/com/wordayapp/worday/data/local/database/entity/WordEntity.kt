@@ -1,9 +1,13 @@
 package com.wordayapp.worday.data.local.database.entity
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "words")
+@Entity(
+    tableName = "words",
+    indices = [Index(value = ["catalogId"], unique = true)]
+)
 data class WordEntity(
     @PrimaryKey val id: Int,
     val english: String,
@@ -19,5 +23,6 @@ data class WordEntity(
     val repetitionCount: Int = 0,
     val isLearned: Boolean = false,
     val isSaved: Boolean = false,
-    val nextReviewDate: Long = 0L
+    val nextReviewDate: Long = 0L,
+    val catalogId: String? = null
 )
