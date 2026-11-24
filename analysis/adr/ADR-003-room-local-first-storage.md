@@ -1,27 +1,28 @@
-# ADR-003: Room ile Yerel-Öncelikli Veri Saklama
+# ADR-003: Room ile çevrimdışı veri saklama
 
-- Durum: Kabul edildi (mevcut yaklaşım; migration kararı güncellenecek)
-- Tarih: 24.11.2026
+- **Durum:** Kabul edildi
+- **Tarih:** 24.11.2026
 
-## Bağlam
-Kelime kataloğu ve öğrenme ilerlemesi temel ürün deneyimidir. İnternet bağlantısı güvenilir olmayabilir; öğrenme/quiz akışları çevrimdışı çalışmalıdır.
+## Neden?
+
+Worday'in temel işlevleri internet bağlantısı olmasa da kullanılabilmeli. Kullanıcının kelimeleri, tekrar durumu ve çalışma geçmişi cihazda erişilebilir olmalı.
 
 ## Karar
-Kelime kataloğu, SM-2 durumu, kaydedilen kelimeler ve çalışma oturumları Room'da saklanır. DataStore basit kullanıcı tercihleri için kullanılır. Repository katmanı domain'e Flow ve suspend API'leri sunar.
 
-## Gerekçe
-- SQL sorguları ve ilişkisel tutarlılık.
-- Flow ile reaktif UI güncellemesi.
-- Çevrimdışı erişim ve hızlı yerel okuma.
-- DAO seviyesinde test edilebilirlik.
+Kelime kataloğu, öğrenme ilerlemesi, kaydedilen kelimeler ve günlük oturumlar Room veritabanında tutulur. Basit kullanıcı tercihleri için DataStore kullanılır.
 
-## Sonuçlar
-Olumlu: ağdan bağımsız temel kullanım, hızlı arama ve deterministik veri kaynağı.
-Olumsuz: migration, yedekleme, cihazlar arası senkronizasyon ve şema sürümleme sorumluluğu uygulamaya aittir.
+Repository katmanı, bu verileri domain katmanına Flow ve suspend fonksiyonları üzerinden sunar.
 
-## Zorunlu iyileştirmeler
-- `fallbackToDestructiveMigration()` üretimden kaldırılmalıdır.
-- Room schema JSON'ları kaynak kontrolünde tutulmalıdır.
-- Migration testleri eklenmelidir.
-- Tarihler ortak gün başlangıcı/timezone standardına göre normalize edilmelidir.
-- Hesap özelliği geldiğinde sabit `userId=1` yerine kullanıcı kapsamı uygulanmalıdır.
+## Sonuçları
+
+- Öğrenme ve quiz ekranları internet bağlantısına bağlı kalmaz.
+- Yerel veriler hızlı okunur ve SQL sorgularıyla filtrelenebilir.
+- Şema değişiklikleri, yedekleme ve ileride eklenecek cihazlar arası senkronizasyon uygulamanın sorumluluğundadır.
+
+## Yapılması gerekenler
+
+- Üretim sürümünde veri kaybına yol açabilecek `fallbackToDestructiveMigration()` kaldırılmalı.
+- Room şemaları kaynak kontrolünde saklanmalı.
+- Eski sürümden yeni sürüme geçişi doğrulayan migration testleri eklenmeli.
+- Günlük oturum tarihleri için tek bir gün ve timezone standardı kullanılmalı.
+- Hesap özelliği eklendiğinde sabit `userId = 1` kullanımı kaldırılmalı ve veriler kullanıcıya göre ayrılmalı.
