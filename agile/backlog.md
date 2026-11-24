@@ -1,215 +1,207 @@
-# Worday — Yapılacak İşler
+# Worday — İş Listesi
 
-**Öncelikler:**  
-- **P0:** Yayın veya temel veri güvenliği için gerekli  
-- **P1:** Ürün kalitesi ve önemli eksikler  
-- **P2:** Sonraki iyileştirmeler  
+Bu liste iki teknik incelemede çıkan ortak ve ek bulgular birleştirilerek hazırlandı. Öncelik, kullanıcı verisinin korunması ve temel öğrenme akışının doğru çalışması. Bir iş ancak kodu tamamlanıp ilgili kontroller çalıştırıldığında kapatılmalı.
 
-Bu liste kod incelemesinden çıkarıldı. Bir iş, kodu ve ilgili testleri tamamlanmadan bitmiş sayılmaz.
+**Öncelik tanımı**
+- **P0:** Veri kaybı, yanlış öğrenme kaydı veya güvenlik riski. Yayından önce çözülmeli.
+- **P1:** Temel ürün akışını ve güvenilirliği etkiliyor.
+- **P2:** Kalite ve sonraki sürüm iyileştirmesi.
 
-## A. Öğrenme ve SM-2
+## 1. Veri ve kelime kataloğu
 
-### US-01 — SM-2 sınır durumlarını test et [P0]
-Yanlış cevap, uzun süre çalışmama ve geçersiz değerlerde tekrar planının bozulmamasını sağla.
+### WD-01 — Room migration'ı güvenli hale getir [P0]
+- Destructive migration kaldırılmalı.
+- Room schema dosyaları sürüm kontrolüne alınmalı.
+- Mevcut kullanıcı verisini koruyan migration yazılmalı.
+- Eski şemadan yeni şemaya geçiş testi geçmeli.
 
-**Tamamlanma koşulları**
-- Kalite yalnızca 0–5 aralığında kabul edilir.
-- Yanlış cevapta tekrar sayısı sıfırlanır.
-- Ease factor 1.3 altına düşmez.
-- İlk iki başarılı tekrar aralığı 1 ve 6 gündür.
-- Uzun süredir gecikmiş kelime tekrar listesinde görünür.
-- Tarih, aralık ve sınır durumları birim testleriyle doğrulanır.
+### WD-02 — Kelime ID'lerini kalıcı hale getir [P0]
+- Kelime kimliği JSON sırasına bağlı olmamalı.
+- Her kelimenin sabit ve benzersiz ID'si olmalı.
+- Var olan ilerleme kayıtları yeni ID'lerle eşleştirilmeli.
+- Katalog sırası değiştiğinde kullanıcı ilerlemesi aynı kelimede kalmalı.
 
-### US-02 — Öğrenme kartı cevaplarını kaydet [P0]
-Kullanıcının “Biliyorum/Bilmiyorum” seçimi ilerlemeye yansısın.
+### WD-03 — Seed sürecini güvenilir yap [P0]
+- Seed tek transaction içinde tamamlanmalı.
+- Aynı katalog ikinci kez yüklenince kayıt çoğalmamalı.
+- Seed sürümü saklanmalı.
+- Hata durumunda ekranlar sonsuz yüklenmede kalmamalı.
+- Seed'in uygulama açılışında birden fazla kez tetiklenmesi önlenmeli.
 
-**Tamamlanma koşulları**
-- Her cevap yalnızca bir kez kaydedilir.
-- İlgili öğrenme durumu güncellenir.
-- Uygulama kapatılıp açıldığında sonuç korunur.
-- Yanlış ve doğru cevap akışları test edilir.
+### WD-04 — Kelime içeriğini kontrol et [P0]
+- Kısa/boş tanımlar, bozuk örnek cümleler ve eksik IPA alanları taranmalı.
+- Atıf artıkları ve biçim bozuklukları temizlenmeli.
+- Örnek cümlelerin dil ve seviye uygunluğu gözden geçirilmeli.
+- Kontrol edilen kayıt sayısı ve kalan sorunlar raporlanmalı.
 
-### US-03 — Quiz sonucunu tutarlı kaydet [P0]
-Quiz, SM-2 ve günlük oturum verileri birbiriyle uyumlu olsun.
+### WD-05 — Kelime kataloğunun lisansını netleştir [P0]
+- Kelime listesi, tanımlar, örnekler ve IPA için kaynaklar belirlenmeli.
+- Ticari kullanım ve yeniden dağıtım izinleri doğrulanmalı.
+- Lisansı belirsiz içerik yayın paketinde kullanılmamalı.
+- Kaynak ve izin bilgileri proje içinde kayıt altına alınmalı.
 
-**Tamamlanma koşulları**
-- Boş soru listesi hata üretmez.
-- Aynı cevap iki kez işlenmez.
-- Quiz sonucu ve günlük oturum tutarlı kaydedilir.
-- Seri aynı gün içinde yanlışlıkla birden fazla artmaz.
+### WD-06 — Tarih ve günlük oturum standardını belirle [P0]
+- Günlük oturumlar tek bir tarih/timezone kuralıyla saklanmalı.
+- Sorgular ve Worker aynı gün başlangıcı standardını kullanmalı.
+- Timezone ve yaz/kış saati değişimi test edilmeli.
 
-### US-04 — Seviye testini tamamla [P1]
-Kullanıcının cevaplarına göre CEFR seviyesi doğru belirlensin.
+## 2. Onboarding ve öğrenme
 
-**Tamamlanma koşulları**
-- Soruların seçenekleri ve doğru cevapları veri modelinde bulunur.
-- Seviye hesaplama kuralları ürün tarafından onaylanır.
-- Boş test ve eksik cevap durumları yönetilir.
+### WD-07 — Onboarding tercihlerini kalıcı kaydet [P0]
+- Seçilen CEFR seviyesi ve günlük hedef doğru repository/use case üzerinden saklanmalı.
+- Uygulama yeniden açıldığında tercihler korunmalı.
+- Varsayılan seviye ve test atlama davranışı belirlenmeli.
 
-## B. Yerel veri ve çevrimdışı kullanım
+### WD-08 — Seviye testini tamamla [P1]
+- Placeholder seçenekler gerçek soru ve cevaplarla değiştirilmeli.
+- Puanın CEFR seviyesine nasıl çevrildiği tanımlanmalı.
+- Eksik cevap ve testten çıkma durumları ele alınmalı.
+- Test sonucu onboarding tercihine aktarılmalı.
 
-### US-05 — Room migration'ı güvenli hale getir [P0]
-Uygulama güncellendiğinde kullanıcının ilerlemesi kaybolmasın.
+### WD-09 — Öğrenme kartı cevaplarını ilerlemeye bağla [P0]
+- “Biliyorum/Bilmiyorum” seçimlerinin iş kuralı belirlenmeli.
+- Her cevap yalnızca bir kez işlenmeli.
+- İlerleme Room'a kalıcı yazılmalı.
+- Uygulama yeniden açıldığında sonuç korunmalı.
 
-**Tamamlanma koşulları**
-- Destructive migration kaldırılır.
-- Room schema dosyaları repoya eklenir.
-- Eski sürümden yeni sürüme geçiş testi geçer.
+### WD-10 — SM-2 algoritmasını test et [P0]
+- Kalite 0–5 dışında kabul edilmemeli.
+- Yanlış cevapta tekrar sayısı ve aralık beklenen şekilde güncellenmeli.
+- İlk iki başarılı aralık 1 ve 6 gün olmalı.
+- Ease factor 1.3 altına düşmemeli.
+- Zaman sabitlenebilir olmalı.
+- Öğrenilmiş kelimenin yeniden yanlış cevaplanma kuralı netleştirilmeli.
+- Uzun süre gecikmiş kelimeler için tekrar davranışı doğrulanmalı.
 
-### US-06 — Kelime kataloğu yüklemesini güvenilir yap [P0]
-İlk açılışta katalog eksiksiz yüklensin.
+### WD-11 — Gerçek tekrar döngüsünü tamamla [P0]
+- Due kelimeler tekrar listesine girmeli.
+- Cevap sonrası yeni tekrar tarihi kaydedilmeli.
+- Öğrenilmiş kelimeler ürün kuralına göre yeniden değerlendirilebilmeli.
+- Tekrar listesi uygulama kapatılıp açıldığında bozulmamalı.
 
-**Tamamlanma koşulları**
-- Seed işlemi transaction içinde yürür.
-- Aynı kelime tekrar eklenmez.
-- Hata durumu gözlenebilir.
-- Ekranlar seed işleminin tamamlanmasını beklerken takılı kalmaz.
+### WD-12 — Quiz kayıtlarını tek akışta tutarlı hale getir [P0]
+- Cevap, SM-2 ve günlük oturum kaydı aynı işlem sırasına göre yönetilmeli.
+- Aynı cevap iki kez işlenmemeli.
+- Quiz yarıda bırakıldığında yalnızca gerçekten cevaplanan sorular kaydedilmeli.
+- Boş soru listesi ve sıfır soru durumu hata üretmemeli.
+- Quiz sonucu tekrar açılışta doğru görünmeli.
 
-### US-07 — Günlük tarih hesaplarını düzelt [P0]
-Seri ve istatistikler cihazın yerel takvim günüyle uyumlu olsun.
+### WD-13 — Quiz seçeneklerini güvenilir üret [P1]
+- Çeldiriciler doğru cevaptan farklı olmalı.
+- Aynı seçenek birden fazla kez gösterilmemeli.
+- Yeterli çeldirici yoksa ekran kontrollü davranmalı.
+- Seviye ve kelime havuzuna göre seçenek kalitesi kontrol edilmeli.
 
-**Tamamlanma koşulları**
-- Oturum tarihleri tek standarda göre saklanır.
-- Gün değişimi ve timezone/DST senaryoları test edilir.
+## 3. İstatistik ve kullanıcı ekranları
 
-### US-08 — Room sorgularını gözden geçir [P1]
-Kelime arama ve tekrar listeleri büyük katalogda hızlı çalışsın.
+### WD-14 — Streak hesabını takvim gününe göre düzelt [P0]
+- Seri sabit 24 saat hesabıyla değil, yerel takvim günüyle hesaplanmalı.
+- Aynı gün içindeki birden fazla çalışma seriyi birden fazla artırmamalı.
+- Worker'ın gecikmesi seri hesabını bozmamalı.
+- WorkManager işi gerçek cihazda doğrulanmalı.
 
-**Tamamlanma koşulları**
-- Sorgular ve indeksler incelenir.
-- Gereksiz tekrar eden DAO metotları kaldırılır.
-- Performans gerçek cihazda ölçülür.
+### WD-15 — WorkManager/Hilt yapılandırmasını doğrula [P0]
+- Worker'ın nasıl oluşturulduğu ve bağımlılıklarını nasıl aldığı netleştirilmeli.
+- Gerekliyse HiltWorkerFactory Application/WorkManager yapılandırmasına eklenmeli.
+- İşin tekrar planlanması ve başarısızlıkta davranışı test edilmeli.
 
-### US-09 — Çevrimdışı senkronizasyon kuyruğu ekle [P1]
-İnternet yokken yapılan işlemler bağlantı geldiğinde sunucuya aktarılabilsin.
+### WD-16 — Haftalık istatistikleri takvim günleriyle hesapla [P1]
+- Son yedi takvim günü gösterilmeli.
+- Çalışılmayan günler sıfır olarak görünmeli.
+- Timezone değişimi ele alınmalı.
+- Due kelime sayısı ile oturum sayısı birbirinden ayrılmalı.
 
-**Tamamlanma koşulları**
-- Her olayın benzersiz ID'si vardır.
-- Room'a kayıt ile outbox kaydı tutarlıdır.
-- WorkManager geçici hatalarda tekrar dener.
-- Sunucu aynı olayı iki kez kaydetmez.
-- Çakışma kuralı belgelenir.
+### WD-17 — Wordbook akışını tamamla [P1]
+- Arama ve filtreler birlikte doğru çalışmalı.
+- Kaydet/kaldır işlemi kalıcı olmalı.
+- Boş liste, boş arama sonucu ve hata durumları gösterilmeli.
+- Sıralama ve filtre kombinasyonları test edilmeli.
 
-## C. Backend ve AI
+### WD-18 — Ekran durumlarını tamamla [P1]
+- Ana ekranlar loading, success, empty ve error durumlarını yönetmeli.
+- Seed veya ağ hatası ekranı sonsuz yüklemede bırakmamalı.
+- Tekrar deneme gereken yerde kullanıcıya sunulmalı.
 
-### US-10 — Kotlin backend temelini kur [P0]
-Çalıştırılabilir bir Spring Boot servisi oluştur.
+### WD-19 — Yerelleştirme ve erişilebilirliği düzelt [P1]
+- Sabit metinler string resource'a taşınmalı.
+- Türkçe ve İngilizce metinler tutarlı olmalı.
+- TalkBack etiketleri, yazı boyutu ve kontrast kontrol edilmeli.
 
-**Tamamlanma koşulları**
-- Kotlin Spring Boot uygulaması açılır.
-- Health endpoint yanıt verir.
-- PostgreSQL Docker Compose ile ayağa kalkar.
-- Flyway migration çalışır.
-- Otomatik testler geçer.
+## 4. Mimari, backend ve AI
 
-### US-11 — Firebase kimlik doğrulamasını ekle [P0]
-Kullanıcı yalnızca kendi verisine erişebilsin.
+### WD-20 — Modül bağımlılıklarını gözden geçir [P1]
+- Feature modüllerinin `:core:data` gibi somut katmanlara doğrudan bağımlılığı kontrol edilmeli.
+- Mümkün olan yerde domain arayüzleri kullanılmalı.
+- Gradle bağımlılık yönü ve modül sınırları dokümante edilmeli.
 
-**Tamamlanma koşulları**
-- Firebase ID token backend'de doğrulanır.
-- UID doğrulanmış token'dan alınır.
-- Geçersiz ve süresi dolmuş token reddedilir.
-- Başka kullanıcının verisine erişim testle engellenir.
+### WD-21 — Kotlin backend temelini kur [P1]
+- Kotlin + Spring Boot modüler monolit oluşturulmalı.
+- Health endpoint çalışmalı.
+- PostgreSQL Docker Compose ile ayağa kalkmalı.
+- Flyway migration ve temel testler geçmeli.
 
-### US-12 — Gemini isteklerini backend'e taşı [P0]
-Mobil uygulamada Gemini API anahtarı bulunmasın.
+### WD-22 — Firebase token doğrulamasını ekle [P1]
+- ID token backend'de doğrulanmalı.
+- UID yalnızca doğrulanmış token'dan alınmalı.
+- Başka kullanıcının verisine erişim testle engellenmeli.
 
-**Tamamlanma koşulları**
-- Gemini anahtarı sunucu ortamında tutulur.
-- İstek uzunluğu ve kota kontrol edilir.
-- Hız sınırı ve timeout uygulanır.
-- Prompt ve kimlik bilgileri loglanmaz.
-- Android AI repository backend'i kullanır.
+### WD-23 — Gemini çağrısını backend'e taşı [P0]
+- Android BuildConfig içindeki Gemini anahtarı kaldırılmalı.
+- Anahtar yalnızca sunucu ortamında tutulmalı.
+- İstek boyutu, timeout ve hata yönetimi eklenmeli.
+- Prompt ve token loglanmamalı.
+- Android AI repository backend'i kullanmalı.
 
-### US-13 — AI kullanım kotasını tamamla [P1]
-Kullanıcı kalan hakkını doğru görebilsin.
+### WD-24 — AI kotasını sunucuda yönet [P1]
+- Sabit sayaç ve boş tüketim implementasyonu kaldırılmalı.
+- Kota kullanıcı bazında tek kaynaktan yönetilmeli.
+- Günlük/aylık yenilenme kuralı belirlenmeli.
+- Rate limit ve kötüye kullanım kontrolleri eklenmeli.
 
-**Tamamlanma koşulları**
-- Sabit sayaç kaldırılır.
-- Kota tek bir güvenilir kaynaktan yönetilir.
-- Günlük/aylık sıfırlanma kuralı belirlenir.
-- Çevrimdışı durumda gösterilecek bilgi tanımlanır.
+### WD-25 — Çevrimdışı senkronizasyonu tasarla ve uygula [P2]
+- Room yerel veri kaynağı olarak kalmalı.
+- Yerel işlemle outbox kaydı atomik olmalı.
+- Olayların benzersiz ID'si olmalı.
+- Sunucu aynı olayı ikinci kez kaydetmemeli.
+- Pull cursor ve çakışma çözümü test edilmeli.
+- Oturum süresi dolduğunda çevrimdışı öğrenme devam etmeli.
 
-## D. Ekran ve ürün kalitesi
+## 5. Test ve yayın
 
-### US-14 — İstatistikleri takvim günlerine göre hesapla [P1]
-Son yedi günün verisi eksiksiz gösterilsin.
+### WD-26 — Kritik testleri CI'a ekle [P0]
+- Domain/SM-2 testleri çalışmalı.
+- Room DAO ve migration testleri çalışmalı.
+- Quiz ve onboarding ViewModel testleri eklenmeli.
+- WorkManager davranışı test edilmeli.
+- CI lint, unit test ve build adımlarını çalıştırmalı.
 
-**Tamamlanma koşulları**
-- Çalışılmayan günler sıfır olarak gösterilir.
-- Timezone doğru uygulanır.
-- Due kelime sayısı ile tamamlanmamış oturum sayısı ayrı tutulur.
+### WD-27 — Release paketini güvenli hale getir [P0]
+- Release loglarında BODY logging kapalı olmalı.
+- Secret taraması yapılmalı.
+- R8/minification gerçek modellerle test edilerek açılmalı.
+- Backup kapsamı incelenmeli.
+- İmzalama anahtarları repoda tutulmamalı.
 
-### US-15 — Kelime defterini iyileştir [P2]
-Arama ve filtreler birlikte doğru çalışsın.
+### WD-28 — Internal testing dağıtımını hazırla [P0]
+- İmzalı AAB üretimi doğrulanmalı.
+- VersionCode ve versionName kontrol edilmeli.
+- Play Console Internal testing kanalında test edilmeli.
+- Temiz kurulum ve uygulama güncelleme senaryoları denenmeli.
+- Geri alma ve sürüm notları hazırlanmalı.
 
-**Tamamlanma koşulları**
-- Filtre kombinasyonları test edilir.
-- Boş liste ve arama sonucu bulunamaması için durum tasarlanır.
+### WD-29 — Gizlilik ve mağaza beyanlarını doğrula [P0]
+- Release sürümünün gerçek veri akışı çıkarılmalı.
+- Firebase, AdMob ve Gemini'nin fiili kullanımı kontrol edilmeli.
+- Data safety ve gizlilik metinleri bu akışla eşleşmeli.
+- Veri saklama/silme ve yurt dışı aktarım bilgileri netleştirilmeli.
+- Hukuki metinler yetkin bir hukuk danışmanına inceletilmeli.
 
-### US-16 — Loading, empty ve error durumlarını tamamla [P1]
-Kullanıcı ekranın neden boş olduğunu veya ne yapması gerektiğini anlayabilsin.
+### WD-30 — Mağaza sayfasını tamamla [P1]
+- Türkçe ve İngilizce açıklamalar hazırlanmalı.
+- Ekran görüntüleri, ikon ve grafikler tamamlanmalı.
+- İçerik derecelendirmesi ve uygulama erişim bilgileri doldurulmalı.
+- Destek iletişim kanalı belirlenmeli.
 
-**Tamamlanma koşulları**
-- Her ana ekran yükleniyor, başarılı, boş ve hata durumlarını yönetir.
-- Uygun yerlerde tekrar deneme sunulur.
+## İş kapatma kuralı
 
-### US-17 — Türkçe ve İngilizce metinleri tamamla [P1]
-Arayüzün tüm metinleri seçilen dile uygun gösterilsin.
-
-**Tamamlanma koşulları**
-- Sabit ekran metinleri string resource'a taşınır.
-- Türkçe ve İngilizce kaynaklar tamamlanır.
-
-## E. Test ve yayın
-
-### US-18 — CI testlerini genişlet [P0]
-Her değişiklikte temel kalite kontrolleri otomatik çalışsın.
-
-**Tamamlanma koşulları**
-- Lint, unit test ve build çalışır.
-- Room migration ve kritik domain testleri CI'a eklenir.
-- Release build doğrulanır.
-
-### US-19 — Release güvenliğini tamamla [P0]
-Yayın paketinde gizli anahtar ve debug verisi bulunmasın.
-
-**Tamamlanma koşulları**
-- R8/minification test edilerek etkinleştirilir.
-- HTTP BODY logging release'te kapalıdır.
-- Secret taraması yapılır.
-- Backup kapsamı belirlenir.
-
-### US-20 — Google Play test dağıtımını hazırla [P0]
-İmzalı AAB güvenli ve tekrarlanabilir şekilde üretilebilsin.
-
-**Tamamlanma koşulları**
-- İmzalama bilgileri GitHub Secrets'ta tutulur.
-- Release workflow oluşturulur.
-- Internal testing yapılır.
-- Dağıtım ve geri alma adımları belgelenir.
-
-### US-21 — Gizlilik ve kullanım metinlerini doğrula [P0]
-Kullanıcıya gerçek veri işleme süreci doğru anlatılsın.
-
-**Tamamlanma koşulları**
-- Release sürümündeki veri akışı incelenir.
-- KVKK/GDPR metinleri hukuk danışmanına inceletilir.
-- Gizlilik politikası erişilebilir bir URL'de yayımlanır.
-- Veri silme ve saklama süreçleri açıklanır.
-
-### US-22 — Mağaza sayfasını hazırla [P1]
-Kullanıcı uygulamanın sunduğu özellikleri doğru anlayabilsin.
-
-**Tamamlanma koşulları**
-- Türkçe ve İngilizce başlık/açıklamalar hazırlanır.
-- Ekran görüntüleri ve grafikler tamamlanır.
-- İçerik derecelendirmesi ve Data safety formu doğru doldurulur.
-
-## Bir işi tamamlanmış sayma kuralı
-
-- Kod gözden geçirildi.
-- İlgili testler çalıştırıldı ve geçti.
-- Hata, boş veri ve yüklenme durumları ele alındı.
-- Güvenlik ve gizlilik etkisi kontrol edildi.
-- Gerekli doküman güncellendi.
+Bir iş ancak ilgili kod değişikliği tamamlandığında, uygun testler gerçekten çalıştırılıp geçtiğinde ve gerekiyorsa doküman güncellendiğinde kapatılır. Sadece dosya veya test yazılmış olması yeterli değildir.
